@@ -1,0 +1,62 @@
+h4 {
+    font-size: 16px;
+    font-weight: 600;
+    color: #4a4949;
+}
+
+#resultsContainer {
+	text-align: center;
+	margin: auto;
+}
+
+#resultsRow1, #resultsRow4 {
+	font-size: 16px;
+	font-weight: 600;
+}
+
+#resultsRow1Cell1, #resultsRow1Cell2, #resultsRow2Cell1, #resultsRow2Cell2 {
+	display: inline-block;
+	width: 30%;
+}
+
+#resultsRow2, #resultsRow5 {
+	font-size: 20px;
+	font-weight: 600;
+	color: #515151;
+}
+
+#resultsRow3 {
+	font-size: 80px;
+	font-weight: 700;
+	color: #004E54;
+	line-height: 1;
+	padding-top: 25px;
+	letter-spacing: -5px;
+}
+
+#resultsRow5 {
+	padding-top: 30px;
+}
+
+.gt_row {
+	padding-top:1px !important;
+	padding-bottom: 1px !important;
+}
+
+.gt_table {
+	font-size: 13px !important;
+}
+
+.shiny-text-output {
+	margin:auto;
+	text-align: center;
+	font-size: 25px;
+	font-weight: 700;
+	width: 100%;
+}
+
+.navbar, .container-fluid {
+  visibility: hidden;
+  display: none;
+}
+
