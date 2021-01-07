@@ -28,10 +28,10 @@ h4 {
 #resultsRow3 {
 	font-size: 80px;
 	font-weight: 700;
-	color: #004E54;
+	/*color: #004E54;*/
 	line-height: 1;
 	padding-top: 25px;
-	letter-spacing: -5px;
+	letter-spacing: -4px;
 }
 
 #resultsRow5 {
@@ -55,12 +55,37 @@ h4 {
 	width: 100%;
 }
 
-.navbar, .container-fluid {
+/*.navbar, .container-fluid {
   visibility: hidden;
   display: none;
 }
 
 body {
 	padding-top: 0px;
+}*/
+
+/* Format the title bar */
+.navbar{
+  font-family: "Lato",helvetica,arial,sans-serf; 
+  background-color: #000000;
+  text-align: center;
+} 
+
+/* Numerical inputs */
+.form-control {
+  font-size: 16px;
+  padding: 0 10px;
+  /*background-color: #bdd4f9;
+  border: none;*/
+  height: 30px;
+  width: 150px;
 }
+
+/* Set the main body/text font */
+p, a, body {
+    font-family: "Lato", helvetica,arial,sans-serf;
+    font-size: 1.1em;
+    margin: 5px 0 5px 0;
+}
+
 

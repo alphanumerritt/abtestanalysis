@@ -1,12 +1,12 @@
 ---
-title: "abTestResults"
-author: "Merritt Aho"
-date: "12/30/2020"
+title: "Test Results Presentation"
 output: 
   flexdashboard::flex_dashboard:
     orientation: rows
     css: styles.css
     vertical_layout: scroll
+    logo: logo-sm.png
+    favicon: favicon.png
 runtime: shiny
 ---
 
@@ -16,7 +16,7 @@ library(shiny)
 library(gt)
 library(tidyr)
 library(dplyr)
-library(pwr)
+library(scales)
 
 # SDI colors are
 # Light Orange: F58220
@@ -144,7 +144,10 @@ inputPanel(
   
   textInput("hexa", label = "Custom hex color code for A", value = "#FF6D00"),
 
-  textInput("hexb", label = "Custom hex color code for B", value = "#00A2B1")
+  textInput("hexb", label = "Custom hex color code for B", value = "#00A2B1"),
+  
+  textInput("hexd", label = "Custom hex color code for other charts", value = "#515151")
+  
 )
 
 
@@ -167,6 +170,7 @@ Row {data-height=300}
 renderUI({
   colora <- paste0("color:",input$hexa)
   colorb <- paste0("color:",input$hexb)
+  colord <- paste0("color:",ifelse(rctRslts$cvrb>rctRslts$cvra,input$hexb,input$hexa))
   
   div(id = "resultsContainer",
     div(id = "resultsRow1",
@@ -186,7 +190,7 @@ renderUI({
         paste0(round(rctRslts$cvrb*100,1),"%")
       )
     ),
-    div(id = "resultsRow3",
+    div(id = "resultsRow3", style = colord,
         paste0(round(rctRslts$diff*100,1),"%")
     ),
     div(id = "resultsRow4",
@@ -242,11 +246,11 @@ renderPlot({
     mutate(relEffect = Effect/rctRslts$cvra)
   #Let's plot the distributions
   ggplot(df, aes(x = relEffect)) +
-    geom_density(aes(y=..scaled..), alpha = .2, bw = "SJ", adjust = 2, fill = "#515151") +
+    geom_density(aes(y=..scaled..), alpha = .2, bw = "SJ", adjust = 2, fill = input$hexd) +
     labs(x="True difference in conversion rates", y="Likelihood") +
     scale_x_continuous(labels = scales::percent) +
     scale_y_continuous(expand = c(0, 0), limits = c(0,1.2)) +
-    geom_vline(xintercept = c(rctRslts$lod,rctRslts$upd,rctRslts$diff), linetype = "dashed", size = .25, color = "#515151") +
+    geom_vline(xintercept = c(rctRslts$lod,rctRslts$upd,rctRslts$diff), linetype = "dashed", size = .25, color = input$hexd) +
     annotate(geom="text", x= c(rctRslts$lod,rctRslts$upd,rctRslts$diff),
        y=.5, 
        #hjust = 0,     # zero left justifies the text annotation horizontally. 0.5 is center, 1 is right justified.  
@@ -432,30 +436,40 @@ renderPlot({
   sims <- 10000
   ptDiff <- rctRslts$cvrb - rctRslts$cvra
   revMult <- input$convVolume * input$convValue * 6
+  revMult2 <- revMult * rctRslts$cvra
   ciLines <- c(rctRslts$lod,rctRslts$upd,rctRslts$diff) * rctRslts$cvra * input$convVolume * input$convValue * 6
-  ciLabels <- paste0(round(ciLines),"$")
+  #ciLabels <- paste0(round(ciLines),"$")
+  #ciLabels <- c(paste0(100-(100-input$confinterval)/2,"% chance of at least this much"),paste0((100-input$confinterval)/2,"% chance of at least this much"),"")
+  lorev <- dollar_format(largest_with_cents = 9, negative_parens = TRUE)
+  
+  uprev <- dollar_format(largest_with_cents = 9, negative_parens = TRUE)
+  
+  lolabel <- paste0(100-(100-input$confinterval)/2,"% chance of contributing at least ",lorev(rctRslts$lod*revMult2))
+  uplabel <- paste0((100-input$confinterval)/2,"% chance of contributing at least ",uprev(rctRslts$upd*revMult2))
+  ciLabels <- c(lolabel,uplabel,"")
 
   df <- data.frame(Effect = rnorm(n = sims, mean = ptDiff, sd = rctRslts$seDif)) %>%
     mutate(revIncrease = Effect * revMult) %>%
     mutate(adjIncrease = ifelse(revIncrease < 0, 0, revIncrease))
 
   #Let's plot the distributions
-  ggplot(df, aes(x = adjIncrease)) +
-    geom_density(aes(y= 1 - ..y..), alpha = .2, stat = "ecdf", fill = "#515151", size = 1.5) +
+  ggplot(df, aes(x = revIncrease)) +
+    geom_density(aes(y= 1 - ..y..), alpha = .2, stat = "ecdf", fill = input$hexd) + #, size = 1) +
     # stat_ecdf(aes(y = 1 - ..y..), geom = "area", alpha = .2, fill = "#515151") +
     # stat_ecdf(aes(y = 1 - ..y..), geom = "density") +
-    labs(x="Expected value contribution", y="Likelihood") +
-    scale_x_continuous(expand = c(0, 0), limits = c(0,NA),labels = scales::dollar) +
+    labs(x="Expected minimum value contribution", y="Likelihood") +
+    # scale_x_continuous(expand = c(0, 0), limits = c(0,NA),labels = scales::dollar) +
+    scale_x_continuous(expand = c(0, 0), limits = c(NA,NA),labels = scales::dollar) +
     scale_y_continuous(expand = c(0, 0), limits = c(0,1.05), labels = scales::percent) +
-    # geom_vline(xintercept = ciLines, linetype = "dashed", size = .25, color = "#515151") +
-    # annotate(geom="text", x= ciLines,
-    #    y=.5, 
-    #    #hjust = 0,     # zero left justifies the text annotation horizontally. 0.5 is center, 1 is right justified.  
-    #    #vjust = 0.5,   # > +0.1 range pushes the text annotation down vertically
-    #    label= ciLabels,
-    #    fontface = "bold",
-    #    angle = 90,
-    #    size = 4.0) +
+    geom_vline(xintercept = ciLines, linetype = "dashed", size = .25, color = "#515151") +
+    annotate(geom="text", x= ciLines,
+       y=.5,
+       #hjust = 0,     # zero left justifies the text annotation horizontally. 0.5 is center, 1 is right justified.
+       #vjust = 0.5,   # > +0.1 range pushes the text annotation down vertically
+       label= ciLabels,
+       fontface = "bold",
+       angle = 90,
+       size = 3.0) +
     theme_light() 
     #theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), axis.text.y = element_blank(), axis.ticks.y = element_blank())
 })
@@ -463,5 +477,7 @@ renderPlot({
 
 ### Notes
 
-The revenue projections are based on the confidence interval around the difference in conversion rates extended for 6 months of impact based on current volume and conversion value. The chart shows the cumulative probability of achieving at least a certain value. Negative numbers are counted as $0 value.
+The revenue projections are based on the confidence interval around the difference in conversion rates extended for 6 months of impact based on current volume and conversion value. The chart shows the cumulative probability of achieving at least a certain value, even if negative.
+
+Predicting revenue impact is tricky and we recommend extreme caution before booking any upside with the finance team. In fact, [we made a whole simulator](https://sdidev.shinyapps.io/test-result-simulator/) to illustrate why. 
 
