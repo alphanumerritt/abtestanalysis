@@ -31,11 +31,17 @@ library(scales)
 ```
 
 ```{r calculations, include=FALSE}
+# Declare reactive variables to hold all results for use throughout
 rctRslts <- reactiveValues(pv = NULL, cl = NULL, upa = NULL, upb = NULL, upd = NULL, loa = NULL, lob = NULL, lod = NULL, diff = NULL, seDif = NULL, z = NULL)
 
+# Main event observer to listen for input changes and to calculate main results
 observeEvent(c(input$cva, input$cvb, input$traffa, input$traffb, input$confinterval, input$tails, input$nonf, input$bonf), {
+  
+  # Don't execut unless traffic inputs are greater than conversion inputs
   req(input$traffa > input$cva)
   req(input$traffb > input$cvb)
+  req(input$cva > 0)
+  req(input$cvb > 0)
   
   ca <- input$cva
   cb <- input$cvb
@@ -62,6 +68,7 @@ observeEvent(c(input$cva, input$cvb, input$traffa, input$traffb, input$confinter
   conf <- 1-pval
   testpower <- power.prop.test(n = (input$traffa + input$traffb)/2, p1 = cvra, p2 = cvrb, sig.level = 1 - ci, alternative = ifelse(input$tails < 2, "one", "two"))
 
+  # Dump all the values into the reactive variables
   rctRslts$pv <- pval
   rctRslts$cl <- conf
   rctRslts$upa <- ciua
@@ -89,65 +96,38 @@ Column {.sidebar data-width=270}
 ```{r inputs}
 inputPanel(
   h4("Control Variation"),
-  
   numericInput("cva", label = "Control Conversions", value = 890, min = 0),
-  
   numericInput("traffa", label = "Control Traffic", value = 10000, min = 0)
-  
-  # renderText({
-  #   paste0("Control Conversion Rate = ",round(input$cva/input$traffa*100,2),"%")
-  # })
-  
 )
 
 inputPanel(
   h4("Test Variation"),
-  
   numericInput("cvb", label = "Test Conversions", value = 920, min = 0),
-  
   numericInput("traffb", label = "Test Traffic", value = 10000, min = 0)
-  # 
-  # renderText({
-  #   paste0("Test Conversion Rate = ",round(input$cvb/input$traffb*100,2),"%")
-  # })
-  
 )
 
 inputPanel(
   h4("Test Configuration Inputs"),
-  
   numericInput("confinterval", label = "Confidence Interval percent", value = 95, min = 50, max = 99),
-  
   numericInput("tails", label = "How many tails?", value = 1, min = 1, max = 2),
-  
   #numericInput("nonf", label = "Non-inferiority margin (if applicable)", value = 0, min = 0, max = 100),
-
   numericInput("bonf", label = "Total p-values being calculated (applies Bonferroni correction)", value = 1, min = 0, max = 99)
 )
 
 inputPanel(
   h4("Revenue Projection Inputs"),
-  
   numericInput("convValue", label = "What's the approximate value of a conversion?", value = 10, min = 0, max = 10000000),
-  
   numericInput("convVolume", label = "About how many conversions per month does the test audience provide?", value = 1000, min = 1, max = 10000000)
 )
 
 inputPanel(
   h4("Customize This Report"),
-  
-  textInput("testname", label = "Name of test for chart labels", value = "A/B"),
-
+  textInput("testname", label = "Name of test for report label", value = "A/B"),
   textInput("expA", label = "Label for Experience A", value = "A"),
-  
   textInput("expB", label = "Label for Experience B", value = "B"),
-  
   textInput("hexa", label = "Custom hex color code for A", value = "#FF6D00"),
-
   textInput("hexb", label = "Custom hex color code for B", value = "#00A2B1"),
-  
   textInput("hexd", label = "Custom hex color code for other charts", value = "#515151")
-  
 )
 
 
@@ -155,25 +135,23 @@ inputPanel(
 
 Row {data-height=40}
 -----------------------------------------------------------------------
-```{r}
-renderText({
-      paste0(input$testname," Test Results")
-})
+```{r resultsHeader}
+renderText({paste0(input$testname," Test Results")})
 ```
 
 
-Row {data-height=300}
+Row {data-height=350}
 -----------------------------------------------------------------------
 
 ### Key Results
-```{r}
+```{r keyResults}
 renderUI({
   colora <- paste0("color:",input$hexa)
   colorb <- paste0("color:",input$hexb)
   colord <- paste0("color:",ifelse(rctRslts$cvrb>rctRslts$cvra,input$hexb,input$hexa))
   
-  div(id = "resultsContainer",
-    div(id = "resultsRow1",
+  div(id = "resultsContainer", # outer shell
+    div(id = "resultsRow1", # row with variant names
       div(id = "resultsRow1Cell1", style = colora,
         input$expA
       ),
@@ -182,7 +160,7 @@ renderUI({
       )
       
     ),
-    div(id = "resultsRow2",
+    div(id = "resultsRow2", # row with conversion rates
       div(id = "resultsRow2Cell1",
         paste0(round(rctRslts$cvra*100,1),"%")
       ),
@@ -190,13 +168,13 @@ renderUI({
         paste0(round(rctRslts$cvrb*100,1),"%")
       )
     ),
-    div(id = "resultsRow3", style = colord,
+    div(id = "resultsRow3", style = colord, # row with conversion difference
         paste0(round(rctRslts$diff*100,1),"%")
     ),
-    div(id = "resultsRow4",
+    div(id = "resultsRow4", # word
         "difference"
     ),
-    div(id = "resultsRow5",
+    div(id = "resultsRow5", # row with stat sig
       paste0(round(rctRslts$cl*100,1),"% statistical significance")
     )
   )
@@ -204,58 +182,29 @@ renderUI({
 ```
 
 
-```{r include=FALSE}
-render_gt({
-
-  df <- data.frame(
-    Metric = c(
-      "Conversion Rate A",
-      "Conversion Rate B",
-      "Delta",
-      "",
-      "Statistical Significance"),
-    Lower = c(rctRslts$loa,rctRslts$lob,rctRslts$lod,NA,rctRslts$cl),
-    Observed = c(rctRslts$cvra,rctRslts$cvrb,rctRslts$diff,NA,NA),
-    Upper = c(rctRslts$upa,rctRslts$upb,rctRslts$upd,NA,NA)
-  )
-  
-  gt(df) %>%
-    fmt_percent(columns=vars(Lower,Observed,Upper), decimals = 1) %>%
-    cols_align(align = "left", columns = vars(Metric)) %>%
-    cols_label(Metric = "Confidence Intervals") %>%
-    fmt_missing(columns=vars(Lower,Observed,Upper), rows = NULL, missing_text = " ") %>%
-    tab_header(
-      title = md("Test Results Calculations"),
-      subtitle = md("*Only valid at first calculation")
-    )
-
-}, align = "left")
-```
-
-
 ### Confidence Interval of Difference
 
-```{r}
+```{r diffConfidenceInterval}
 
 renderPlot({
   
-  sims <- 10000
-  ptDiff <- rctRslts$cvrb - rctRslts$cvra
+  sims <- 10000 # how many simulations of conversion rate for chart
+  ptDiff <- rctRslts$cvrb - rctRslts$cvra # raw effect
   
+  # simulate effect sizes with observed effect as mean and SEdiff as sd
   df <- data.frame(Effect = rnorm(n = sims, mean = ptDiff, sd = rctRslts$seDif)) %>%
-    mutate(relEffect = Effect/rctRslts$cvra)
-  #Let's plot the distributions
+    mutate(relEffect = Effect/rctRslts$cvra) # make simulated effects relative to control cvr
+  
+  # plot the distribution
   ggplot(df, aes(x = relEffect)) +
     geom_density(aes(y=..scaled..), alpha = .2, bw = "SJ", adjust = 2, fill = input$hexd) +
     labs(x="True difference in conversion rates", y="Likelihood") +
     scale_x_continuous(labels = scales::percent) +
-    scale_y_continuous(expand = c(0, 0), limits = c(0,1.2)) +
+    scale_y_continuous(expand = c(0, 0), limits = c(0,1.2)) + # this fixes spacing around plot
     geom_vline(xintercept = c(rctRslts$lod,rctRslts$upd,rctRslts$diff), linetype = "dashed", size = .25, color = input$hexd) +
     annotate(geom="text", x= c(rctRslts$lod,rctRslts$upd,rctRslts$diff),
        y=.5, 
-       #hjust = 0,     # zero left justifies the text annotation horizontally. 0.5 is center, 1 is right justified.  
-       #vjust = 0.5,   # > +0.1 range pushes the text annotation down vertically
-       label= c(
+       label= c( # line labels
          paste0(round(rctRslts$lod*100,1),"%"),
          paste0(round(rctRslts$upd*100,1),"%"),
          paste0(round(rctRslts$diff*100,1),"%")),
@@ -263,17 +212,18 @@ renderPlot({
        angle = 90,
        size = 4.0) +
     theme_light() +
-    theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), axis.text.y = element_blank(), axis.ticks.y = element_blank())
+    theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), axis.text.y = element_blank(), axis.ticks.y = element_blank()) # removes unnecessary elements
 })
 ```
 
-Row Row {data-height=300}
+Row Row {data-height=350}
 -----------------------------------------------------------------------
 ### Table of Figures
 
 ```{r fullStats}
 render_gt({
 
+  # create data frame of all the pertinent data
   df <- data.frame(
     Metric = c(
       "Conversion Rate A",
@@ -317,41 +267,37 @@ render_gt({
       )
   )
   
+  # put the data frame in a nice table format
   gt(df) %>%
-    #fmt_percent(columns=vars(Lower,Observed,Upper), decimals = 1) %>%
     fmt_percent(columns=vars(Lower,Observed,Upper), rows=c(1:3,10,11), decimals = 1) %>%
     fmt_number(columns=vars(Lower,Observed,Upper), rows=c(4:9), decimals = 4) %>%
     cols_align(align = "left", columns = vars(Metric)) %>%
     cols_align(align = "center", columns = vars(Lower, Observed, Upper)) %>%
     cols_label(Metric = "Measure") %>%
-    fmt_missing(columns=vars(Lower,Observed,Upper), rows = NULL, missing_text = " ") %>%
+    fmt_missing(columns=vars(Lower,Observed,Upper), rows = NULL, missing_text = " ") %>% # any NA values leave blanks
     tab_options(table.width = pct(100))
-    #tab_header(
-      #title = md("Test Results Calculations"),
-      #subtitle = md("*Only valid at first calculation")
-    #)
 
 }, align = "center")
 ```
 
 ### Confidence Intervals of Conversion Rates
-```{r conversionRates}
+```{r conversionRatesIntervals}
 renderPlot({
 
+  sims <- 10000 # how many simulations of conversion rate for chart
   
-  sims <- 10000
-  
+  # create data frame of simulated conversion rates based on observed CVRs and standard errors
   df <- data.frame(
     variant = factor(c(rep("A", sims),rep("B", sims))),
     CVR = c(rnorm(n = sims, mean = rctRslts$cvra, sd = rctRslts$SEa), rnorm(n = sims, mean = rctRslts$cvrb, sd = rctRslts$SEb)))
 
-  #Let's plot the distributions
+  # plot the distributions
   ggplot(df, aes(x = CVR)) +
     geom_density(aes(y=..scaled.., fill = variant), alpha = .5, bw = "SJ", adjust = 3) +
-    scale_fill_manual(values = c(input$hexa,input$hexb)) +
+    scale_fill_manual(values = c(input$hexa,input$hexb)) + # pull in colors from inputs
     labs(x="True Conversion Rate", y="Likelihood") +
     scale_x_continuous(labels = scales::percent) +
-    scale_y_continuous(expand = c(0, 0), limits = c(0,1.2)) +
+    scale_y_continuous(expand = c(0, 0), limits = c(0,1.2)) + # this fixes spacing around plot
     geom_vline(
       xintercept = c(
         rctRslts$loa,
@@ -363,12 +309,10 @@ renderPlot({
       ),
       linetype = "dashed",
       size = .25,
-      #color = "#515151"
-      color = c(input$hexa, input$hexa,input$hexa, input$hexb,input$hexb,input$hexb)
+      color = c(input$hexa, input$hexa,input$hexa, input$hexb,input$hexb,input$hexb) # colors lines with custom colors from inputs
     ) +
-    annotate(geom="text", x= c(rctRslts$loa,rctRslts$lob,rctRslts$cvra,rctRslts$cvrb,rctRslts$upa,rctRslts$upb),
+    annotate(geom="text", x= c(rctRslts$loa,rctRslts$lob,rctRslts$cvra,rctRslts$cvrb,rctRslts$upa,rctRslts$upb), # adds line labels
        y = c(.2,.5,.2,.5,.2,.5),
-       #hjust = -3,     # zero left justifies the text annotation horizontally. 0.5 is center, 1 is right justified.
        vjust = "center",   # > +0.1 range pushes the text annotation down vertically
        label= c(
          paste0(round(rctRslts$loa*100,1),"%"),
@@ -380,15 +324,14 @@ renderPlot({
        fontface = "bold",
        angle = 90,
        size = 4.0) +
-    annotate(geom="text", 
+    annotate(geom="text", # adds variant labels from inputs
        x= c(rctRslts$cvra,rctRslts$cvrb),
        y = 1.1,
        hjust = "center",
-       #vjust = 3,
        label= c(input$expA,input$expB),
        fontface = "bold",
        size = 4.0) +
-    annotate(geom="pointrange",
+    annotate(geom="pointrange", # adds interval lines
              x = c(rctRslts$cvra,rctRslts$cvrb),
              y = c(.1,.4),
              xmin = c(rctRslts$loa,rctRslts$lob),
@@ -396,88 +339,54 @@ renderPlot({
              #vjust = c(-3,-3.5),
              size = .75,
              shape = 18) +
-    # geom_errorbar(aes(y = 1.5, xmax = rctRslts$upd, xmin = rctRslts$lod), size = .25) +
     theme_light() +
-    theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), axis.text.y = element_blank(), legend.position = "none", axis.ticks.y = element_blank())
+    theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), axis.text.y = element_blank(), legend.position = "none", axis.ticks.y = element_blank()) # gets rid of unnecessary elements
 })
 ```
 
 
-
-```{r cvrBarPlot, include = FALSE}
-renderPlot({
-  df <- data.frame(
-    label = c("Control Conversion Rate","Test Conversion Rate"), 
-    cvr = c(rctRslts$cvra, rctRslts$cvrb),
-    lowlim = c(rctRslts$loa,rctRslts$lob),
-    uplim = c(rctRslts$upa,rctRslts$upb))
-  
-  ggplot(df, aes(x=label, y=cvr, fill=label)) +
-    geom_col(aes(alpha=.7, width=.75)) + 
-    geom_crossbar(ymax=df$uplim, ymin=df$lowlim, alpha=.35, width = .74, fatten = .8, size = .25, fill = c("gray","gray")) +
-    scale_y_continuous(labels = scales::percent, expand = c(0,0), limits = c(0,.04)) +
-    theme_light() +
-    theme(legend.position = "none") +
-    theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), axis.text.y = element_blank()) +
-    xlab("Variation") +
-    ylab("Conversion Rate") +
-    geom_label(aes(label=paste0(round(cvr*100,2),"%")), fill = c("white","white")) +
-    geom_label(aes(y=uplim, label=paste0(round(uplim*100,2),"%")), fill = c("white","white")) +
-    geom_label(aes(y=lowlim, label=paste0(round(lowlim*100,2),"%")), fill = c("white","white")) 
-})
-```
-
-Row Row {data-height=300}
+Row {data-height=350}
 -----------------------------------------------------------------------
 ### 6 Month Revenue Projections
 ```{r}
 renderPlot({
   
-  sims <- 10000
-  ptDiff <- rctRslts$cvrb - rctRslts$cvra
-  revMult <- input$convVolume * input$convValue * 6
-  revMult2 <- revMult * rctRslts$cvra
-  ciLines <- c(rctRslts$lod,rctRslts$upd,rctRslts$diff) * rctRslts$cvra * input$convVolume * input$convValue * 6
-  #ciLabels <- paste0(round(ciLines),"$")
-  #ciLabels <- c(paste0(100-(100-input$confinterval)/2,"% chance of at least this much"),paste0((100-input$confinterval)/2,"% chance of at least this much"),"")
-  lorev <- dollar_format(largest_with_cents = 9, negative_parens = TRUE)
-  
-  uprev <- dollar_format(largest_with_cents = 9, negative_parens = TRUE)
-  
-  lolabel <- paste0(100-(100-input$confinterval)/2,"% chance of contributing at least ",lorev(rctRslts$lod*revMult2))
-  uplabel <- paste0((100-input$confinterval)/2,"% chance of contributing at least ",uprev(rctRslts$upd*revMult2))
+  sims <- 10000 # how many simulations of the difference to make
+  ptDiff <- rctRslts$cvrb - rctRslts$cvra # raw effect size to simulate a random distribution from
+  revMult <- input$convVolume * input$convValue * 6 
+  revMult2 <- revMult * rctRslts$cvra # what to multiply each difference by
+  ciLines <- c(rctRslts$lod,rctRslts$upd,rctRslts$diff) * rctRslts$cvra * input$convVolume * input$convValue * 6 # placement of lines
+  revout <- dollar_format(largest_with_cents = 9, negative_parens = TRUE) # function to set dollar formats for labels
+
+  # compile text labels
+  lolabel <- paste0(trunc(100-(100-input$confinterval)/2),"% chance of contributing at least ",revout(rctRslts$lod*revMult2))
+  uplabel <- paste0(trunc((100-input$confinterval)/2),"% chance of contributing at least ",revout(rctRslts$upd*revMult2))
   ciLabels <- c(lolabel,uplabel,"")
 
+  # simulat effect sizes then multiply them by conversions and value
   df <- data.frame(Effect = rnorm(n = sims, mean = ptDiff, sd = rctRslts$seDif)) %>%
-    mutate(revIncrease = Effect * revMult) %>%
-    mutate(adjIncrease = ifelse(revIncrease < 0, 0, revIncrease))
+    mutate(revIncrease = Effect * revMult) 
 
-  #Let's plot the distributions
+  # plot the distributions
   ggplot(df, aes(x = revIncrease)) +
-    geom_density(aes(y= 1 - ..y..), alpha = .2, stat = "ecdf", fill = input$hexd) + #, size = 1) +
-    # stat_ecdf(aes(y = 1 - ..y..), geom = "area", alpha = .2, fill = "#515151") +
-    # stat_ecdf(aes(y = 1 - ..y..), geom = "density") +
+    geom_density(aes(y= 1 - ..y..), alpha = .2, stat = "ecdf", fill = input$hexd) + 
     labs(x="Expected minimum value contribution", y="Likelihood") +
-    # scale_x_continuous(expand = c(0, 0), limits = c(0,NA),labels = scales::dollar) +
     scale_x_continuous(expand = c(0, 0), limits = c(NA,NA),labels = scales::dollar) +
     scale_y_continuous(expand = c(0, 0), limits = c(0,1.05), labels = scales::percent) +
     geom_vline(xintercept = ciLines, linetype = "dashed", size = .25, color = "#515151") +
     annotate(geom="text", x= ciLines,
        y=.5,
-       #hjust = 0,     # zero left justifies the text annotation horizontally. 0.5 is center, 1 is right justified.
-       #vjust = 0.5,   # > +0.1 range pushes the text annotation down vertically
        label= ciLabels,
        fontface = "bold",
        angle = 90,
-       size = 3.0) +
+       size = 4) +
     theme_light() 
-    #theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), axis.text.y = element_blank(), axis.ticks.y = element_blank())
 })
 ```
 
 ### Notes
 
-The revenue projections are based on the confidence interval around the difference in conversion rates extended for 6 months of impact based on current volume and conversion value. The chart shows the cumulative probability of achieving at least a certain value, even if negative.
+The revenue projections are based on the confidence interval around the difference in conversion rates. These probabilities are applied, without any decay rate, to 6 months of conversion volume at the value provided. The chart shows the cumulative probability of achieving at least a certain value, even if negative.
 
-Predicting revenue impact is tricky and we recommend extreme caution before booking any upside with the finance team. In fact, [we made a whole simulator](https://sdidev.shinyapps.io/test-result-simulator/) to illustrate why. 
+Predicting revenue impact is tricky and we recommend extreme caution before booking any upside with the finance team. In fact, [we made a whole simulator](https://sdidev.shinyapps.io/test-result-simulator/){target="_blank"} to illustrate why. 
 
