@@ -390,3 +390,7 @@ The revenue projections are based on the confidence interval around the differen
 
 Predicting revenue impact is tricky and we recommend extreme caution before booking any upside with the finance team. In fact, [we made a whole simulator](https://sdidev.shinyapps.io/test-result-simulator/){target="_blank"} to illustrate why. 
 
+Row {data-height=50}
+-----------------------------------------------------------------------
+
+To report bugs and submit feature requests [click here](https://github.com/alphanumerritt/abtestanalysis/issues){target="_blank"}.
