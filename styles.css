@@ -1,3 +1,5 @@
+/* AB test results css */
+
 /* Format input headings */
 h4 {
     font-size: 16px;
@@ -98,5 +100,49 @@ p, a, body {
     font-size: 1.1em;
     margin: 5px 0 5px 0;
 }
+
+/* Button formats */
+.btn {
+	font-size: 12px;
+    padding: 6px;
+    background: #72b4e2;
+    color: black;
+    border-color: #868383;	
+}
+
+/* screen shot formats */
+#ssA, #ssB {
+	padding: 15px;
+	display: inline;
+}
+
+#ssA img, #ssB img {
+	max-width: 45%;
+	padding: 10px;
+}
+
+/* Center top row blocks */
+#testTitle, #hypothesis, #imagesboth {
+	text-align: center;
+}
+
+/* test title/image container */
+.testmeta {
+	margin-left: auto;
+	margin-right: auto;
+	width: 100%;
+}
+
+/* Fix test title container height */
+.topRow {
+	height: auto !important;
+	flex-basis: auto !important;
+}
+
+/* Fix padding above input pannel */
+form {
+	padding-top: 10px;
+}
+
 
 
