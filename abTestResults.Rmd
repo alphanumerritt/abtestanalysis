@@ -7,8 +7,10 @@ output:
     vertical_layout: scroll
     logo: logo-sm.png
     favicon: favicon.png
+    fig_height: 1
 runtime: shiny
 ---
+
 
 ```{r setup, include=FALSE}
 library(ggplot2)
@@ -17,6 +19,11 @@ library(gt)
 library(tidyr)
 library(dplyr)
 library(scales)
+
+# Default images placed in reactive variable
+img1a = base64enc::dataURI(file = "placeholderImageA.png", mime = "image/png")
+img1b = base64enc::dataURI(file = "placeholderImageB.png", mime = "image/png")
+reactiveImages <- reactiveValues(imgA = img1a, imgB = img1b)
 
 # SDI colors are
 # Light Orange: F58220
@@ -89,6 +96,8 @@ observeEvent(c(input$cva, input$cvb, input$traffa, input$traffb, input$confinter
   
 ```
 
+Binomial Metric {data-icon="fa-percentage"}
+===================================== 
 
 Column {.sidebar data-width=270}
 -----------------------------------------------------------------------
@@ -121,22 +130,77 @@ inputPanel(
 )
 
 inputPanel(
-  h4("Customize This Report"),
-  textInput("testname", label = "Name of test for report label", value = "A/B"),
-  textInput("expA", label = "Label for Experience A", value = "A"),
-  textInput("expB", label = "Label for Experience B", value = "B"),
+  h4("Customize Labels"),
+  textInput("testname", label = "Name of test for report label", value = "A/B Test Results"),
+  textInput("expA", label = "Label for Control Variation", value = "A"),
+  textInput("expB", label = "Label for Test Variation", value = "B"),
+  
+  # checkboxInput("descToggle", label = "Show test description panel", value = FALSE),
+  
+  textInput("hypo", label = "Test hypothesis", value = "If [this] then [that will happen] because [we have evidence]."),
+  fileInput("imgA", "Screenshot Control", accept = c('image/png', 'image/jpeg')),
+  fileInput("imgB", "Screenshot Test", accept = c('image/png', 'image/jpeg'))
+  )
+
+inputPanel(
+  h4("Customize Colors"),
   textInput("hexa", label = "Custom hex color code for A", value = "#FF6D00"),
   textInput("hexb", label = "Custom hex color code for B", value = "#00A2B1"),
   textInput("hexd", label = "Custom hex color code for other charts", value = "#515151")
 )
 
+# EXPERIMENTAL FOR EXPORT TO PDF
+# remotes::install_github("dreamRs/capture")
+# renderUI({
+#   capture::capture_pdf(
+#     selector = ".level2",
+#     filename = "abTestResults",
+#     icon("download"), "Export to PDF", 
+#     margin = 2
+#   )
+# })
 
 ```
 
-Row {data-height=40}
+
+Row {.topRow}
 -----------------------------------------------------------------------
+
 ```{r resultsHeader}
-renderText({paste0(input$testname," Test Results")})
+output$testheader <- renderUI({
+  div(
+      div(
+        h1(id = "testTitle", paste0(input$testname))
+      ),
+      div(id = "hypothesis",
+          p(paste0("Test hypothesis: ",input$hypo))),
+      div(id = "imagesboth", 
+          div(id = "ssA",
+              img(src = reactiveImages$imgA)
+              ),
+          div(id = "ssB",
+              img(src = reactiveImages$imgB)
+              )
+      )
+  )
+})
+
+
+observeEvent(input$imgA, {
+  req(is.null(input$imgA)==FALSE) 
+
+  reactiveImages$imgA = base64enc::dataURI(file = input$imgA$datapath, mime = "image/png")
+
+})
+
+observeEvent(input$imgB, {
+  req(is.null(input$imgB)==FALSE) 
+
+  reactiveImages$imgB = base64enc::dataURI(file = input$imgB$datapath, mime = "image/png")
+  
+})
+
+uiOutput("testheader", class = "testmeta")
 ```
 
 
@@ -392,5 +456,8 @@ Predicting revenue impact is tricky and we recommend extreme caution before book
 
 Row {data-height=50}
 -----------------------------------------------------------------------
-version 1.1  
+version 1.2  
 To see version history, report bugs and submit feature requests [click here](https://github.com/alphanumerritt/abtestanalysis/issues){target="_blank"}.
+
+<!-- Continuous Metric {data-icon="fa-sort-numeric-down"} -->
+<!-- =====================================  -->
