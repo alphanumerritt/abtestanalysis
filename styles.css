@@ -7,6 +7,11 @@ h4 {
     color: #4a4949;
 }
 
+/* Panel title margin */
+h1 {
+	margin-top: 10px;
+}
+
 /* Key results outer container */
 #resultsContainer {
 	text-align: center;
@@ -84,6 +89,13 @@ body {
   text-align: center;
 } 
 
+/* Navbar lineheight */
+.navbar-nav>li>a {
+	line-height: 1.42857143;
+	padding-top: 10px !important;
+	padding-bottom: 10px !important;
+}
+
 /* Numerical inputs */
 .form-control {
   font-size: 16px;
@@ -105,8 +117,8 @@ p, a, body {
 .btn {
 	font-size: 12px;
     padding: 6px;
-    background: #72b4e2;
-    color: black;
+    background: #1967be;
+    color: white;
     border-color: #868383;	
 }
 
@@ -118,7 +130,8 @@ p, a, body {
 
 #ssA img, #ssB img {
 	max-width: 45%;
-	padding: 10px;
+	margin: 10px;
+	border: 1px solid lightgrey;
 }
 
 /* Center top row blocks */
@@ -139,9 +152,14 @@ p, a, body {
 	flex-basis: auto !important;
 }
 
-/* Fix padding above input pannel */
+/* Fix padding above input pannel 
 form {
-	padding-top: 10px;
+	padding-top: 5px;
+} */
+
+/* pdf button */
+#exportpdf {
+	margin: 15px;
 }
 
 

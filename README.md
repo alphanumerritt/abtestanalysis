@@ -11,6 +11,11 @@ You can enter custom labels and colors and even screen shots of test variants to
 Note: there is an opacity applied to the custom colors.
 
 ## Version History
+#### 1.3 - 2/31/21
+- Added export to pdf feature
+- Optimizations for load time (delayed plot rendering until after load)
+- Added links to other SDI experimentation tools (reformatted navbar in process)
+- Minor code restructuring
 #### 1.2 - 2/30/21
 - Added hypothesis input
 - Added screen shot inputs for test variations along with placeholder images
