@@ -43,6 +43,31 @@ reactiveImages <- reactiveValues(imgA = img1a, imgB = img1b)
 
 ```
 
+<script>
+$('.navbar-logo').wrap('<a href="https://www.searchdiscovery.com/how-we-help/services/optimization/" target=_blank>');
+</script>
+
+<div style="display: none;">
+```{r url_bookmarking}
+# The code below uses query parameters in the URL of the page so that the total configuration 
+# is captured in the URL, enabling someone to "come back" to the exact configuration at any point.
+# See details at: https://shiny.rstudio.com/reference/shiny/1.5.0/updateQueryString.html.
+# This chunk is wrapped in a <div> that sets the display to none because, otherwise, a little
+# bit of JS gets rendered that chunk options are unable to turn off.
+enableBookmarking("url")
+setBookmarkExclude(c("imgA", "imgB"))
+observe({
+  # Trigger this observer every time an input changes
+  reactiveValuesToList(input)
+  session$doBookmark()
+})
+onBookmarked(function(url) {
+  updateQueryString(url)
+})
+```
+</div>
+
+
 ```{r binomialcalculations, include=FALSE}
 # Declare reactive variables to hold all results for use throughout
 rctRslts <- reactiveValues(pv = NULL, cl = NULL, upa = NULL, upb = NULL, upd = NULL, loa = NULL, lob = NULL, lod = NULL, diff = NULL, seDif = NULL, z = NULL)
@@ -151,7 +176,7 @@ inputPanel(
   textInput("expA", label = "Label for Control Variation", value = "A"),
   textInput("expB", label = "Label for Test Variation", value = "B"),
   
-  textInput("hypo", label = "Test hypothesis", value = "If [this] then [that will happen] because [we have evidence]."),
+  textInput("hypo", label = "Test hypothesis", value = "Test Hypothesis: If [this] then [that will happen] because [we have evidence]."),
   fileInput("imgA", "Screenshot Control", accept = c('image/png', 'image/jpeg')),
   fileInput("imgB", "Screenshot Test", accept = c('image/png', 'image/jpeg'))
   )
@@ -181,7 +206,7 @@ renderUI({
 
 ```
 
-Binomial Analysis <!-- {data-icon="fa-percentage"} -->
+Test Analysis <!-- {data-icon="fa-percentage"} -->
 ===================================== 
 
 Row {.topRow}
@@ -194,7 +219,7 @@ output$testheader <- renderUI({
         h1(id = "testTitle", paste0(input$testname))
       ),
       div(id = "hypothesis",
-          p(paste0("Test hypothesis: ",input$hypo))),
+          p(paste0(input$hypo))),
       div(id = "imagesboth", 
           div(id = "ssA",
               img(src = reactiveImages$imgA)
@@ -482,7 +507,7 @@ Predicting revenue impact is tricky and we recommend extreme caution before book
 
 Row {data-height=50}
 -----------------------------------------------------------------------
-version 1.3  
+version 1.4  
 To see version history, report bugs and submit feature requests [click here](https://github.com/alphanumerritt/abtestanalysis/issues){target="_blank"}.
 
 <!-- Continuous Metric {data-icon="fa-sort-numeric-down"} -->
