@@ -52,10 +52,11 @@ $('.navbar-logo').wrap('<a href="https://www.searchdiscovery.com/how-we-help/ser
 # The code below uses query parameters in the URL of the page so that the total configuration 
 # is captured in the URL, enabling someone to "come back" to the exact configuration at any point.
 # See details at: https://shiny.rstudio.com/reference/shiny/1.5.0/updateQueryString.html.
+# And at https://shiny.rstudio.com/articles/bookmarking-state.html
 # This chunk is wrapped in a <div> that sets the display to none because, otherwise, a little
 # bit of JS gets rendered that chunk options are unable to turn off.
 enableBookmarking("url")
-setBookmarkExclude(c("imgA", "imgB"))
+setBookmarkExclude(c("imgA", "imgB", "hypo"))
 observe({
   # Trigger this observer every time an input changes
   reactiveValuesToList(input)
@@ -100,9 +101,8 @@ observeEvent(c(input$cva, input$cvb, input$traffa, input$traffb, input$confinter
   cild <- ((cvrb - cvra) - SEdiff * ciZ)/cvra
   ciud <- ((cvrb - cvra) + SEdiff * ciZ)/cvra
   z <- (cvrb - cvra) / SEdiff
-  pval <- pnorm(z)
-  pval <- if (pval < 0.5) pval else 1-pval
-  pval <- if (pval * input$tails * input$bonf >= .5) .5 else pval * input$tails * input$bonf
+  pval <- (1-pnorm(abs(z))) * input$tails
+  pval <- p.adjust(pval, method = "bonferroni", n = input$bonf)
   conf <- 1-pval
   testpower <- power.prop.test(n = (input$traffa + input$traffb)/2, p1 = cvra, p2 = cvrb, sig.level = 1 - ci, alternative = ifelse(input$tails < 2, "one", "two"))
 
@@ -154,7 +154,7 @@ inputPanel(
   numericInput("confinterval", label = "Confidence Interval percent", value = 95, min = 50, max = 99),
   numericInput("tails", label = "How many tails?", value = 1, min = 1, max = 2),
   #numericInput("nonf", label = "Non-inferiority margin (if applicable)", value = 0, min = 0, max = 100),
-  numericInput("bonf", label = "Total p-values being calculated (applies Bonferroni correction)", value = 1, min = 0, max = 99)
+  numericInput("bonf", label = "Total p-values being calculated (applies Bonferroni correction)", value = 1, min = 1, max = 99)
 )
 
 ```
@@ -507,7 +507,7 @@ Predicting revenue impact is tricky and we recommend extreme caution before book
 
 Row {data-height=50}
 -----------------------------------------------------------------------
-version 1.4  
+version 1.5  
 To see version history, report bugs and submit feature requests [click here](https://github.com/alphanumerritt/abtestanalysis/issues){target="_blank"}.
 
 <!-- Continuous Metric {data-icon="fa-sort-numeric-down"} -->
