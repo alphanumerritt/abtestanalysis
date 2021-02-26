@@ -329,7 +329,7 @@ rmarkdown::render_delayed({
 
 Row Row {data-height=350}
 -----------------------------------------------------------------------
-### Table of Figures
+### Calculations
 
 ```{r fullStats}
 render_gt({
