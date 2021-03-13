@@ -73,29 +73,6 @@ h1 {
 	width: 100%;
 }
 
-/*.navbar, .container-fluid {
-  visibility: hidden;
-  display: none;
-}
-
-body {
-	padding-top: 0px;
-}*/
-
-/* Format the title bar */
-.navbar{
-  font-family: "Lato",helvetica,arial,sans-serf; 
-  background-color: #000000;
-  text-align: center;
-} 
-
-/* Navbar lineheight */
-.navbar-nav>li>a {
-	line-height: 1.42857143;
-	padding-top: 10px !important;
-	padding-bottom: 10px !important;
-}
-
 /* Numerical inputs */
 .form-control {
   font-size: 16px;
@@ -152,15 +129,102 @@ p, a, body {
 	flex-basis: auto !important;
 }
 
-/* Fix padding above input pannel 
-form {
-	padding-top: 5px;
-} */
 
 /* pdf button */
 #exportpdf {
 	margin: 15px;
 }
+
+/* Set SDI logo size */
+.navbar-logo img {
+	max-width: 150px;
+	margin-top:13px;
+}
+
+/* Format the title bar */
+.navbar{
+  font-family: "Lato",helvetica,arial,sans-serf; 
+  background-color: #000000;
+  text-align: center;
+} 
+
+/* Navbar lineheight */
+.navbar-nav>li>a {
+	line-height: 1.42857143;
+	padding-top: 10px !important;
+	padding-bottom: 10px !important;
+}
+
+/* LOTS of stuff here just to get the navigation bar in order */
+
+.navbar-inverse {
+  background-color: #221f20;
+  border-color: none;
+  padding: 10px;
+}
+
+.navbar-right {
+  font-family: "Lato",helvetica,arial,sans-serif;
+  position: absolute;
+  display: block;
+  font-size: 1.2em;
+  color: white;
+}
+
+ul.nav.navbar-nav.navbar-right {
+  background: #009CAB;
+  visibility: visible;
+  opacity: 1;
+  display: block;
+  min-width: 300px;
+  position: relative;
+  transition: all 0.5s ease;
+  padding: 12px 10px 12px 10px;
+}
+
+ul.nav.navbar-nav.navbar-right::before {
+  content: "More Experimentation Tools";
+  }
+
+ul.nav.navbar-nav.navbar-right:hover > li
+{
+  visibility: visible;
+  opacity: 1;
+  display: block;
+}
+
+ul.nav.navbar-nav.navbar-right li {
+  color: #fff;
+  display: none;
+  visibility: hidden;
+  opacity: 0;
+  float: left;
+  padding: 0;
+  position: relative;
+  transition-duration: 0.5s;
+}
+  
+ul.nav.navbar-nav.navbar-right li a {
+  color: #fff;
+  font-weight: normal;
+  font-size: 0.9em;
+    padding: 5px 0 5px 5px;
+}
+
+ul.nav.navbar-nav.navbar-right li:hover {
+  background: #00727C;
+}
+
+ul.nav.navbar-nav.navbar-right li>a:hover {
+  background-color: #004D53;
+}
+
+ul.nav.navbar-nav.navbar-right li {
+  clear: both;
+  width: 100%;
+}
+
+/* End all the stuff for the global nav */
 
 
 

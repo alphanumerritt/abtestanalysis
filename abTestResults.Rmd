@@ -13,6 +13,7 @@ output:
       - { title: "Sample Size", href: "https://sdidev.shinyapps.io/sample-size-calculator/" }
       - { title: "Runtime", href: "https://sdidev.shinyapps.io/sample-size-calculator-runtime/" }
       - { title: "Impact Simulation", href: "https://sdidev.shinyapps.io/test-result-simulator/" }
+      - { title: "Experimentation ROI", "href:https://sdidev.shinyapps.io/experimentation-roi/" }
 runtime: shiny
 ---
 
