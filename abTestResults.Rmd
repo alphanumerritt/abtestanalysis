@@ -13,6 +13,7 @@ output:
       - { title: "Sample Size", href: "https://sdidev.shinyapps.io/sample-size-calculator/" }
       - { title: "Runtime", href: "https://sdidev.shinyapps.io/sample-size-calculator-runtime/" }
       - { title: "Impact Simulation", href: "https://sdidev.shinyapps.io/test-result-simulator/" }
+      - { title: "Experimentation ROI", "href:https://sdidev.shinyapps.io/experimentation-roi/" }
 runtime: shiny
 ---
 
@@ -151,7 +152,7 @@ inputPanel(
 
 inputPanel(
   h4("Test Configuration Inputs"),
-  numericInput("confinterval", label = "Confidence Interval percent", value = 95, min = 50, max = 99),
+  numericInput("confinterval", label = "Statistical significance threshold (a %, also used for confidence intervals)", value = 95, min = 50, max = 99),
   numericInput("tails", label = "How many tails?", value = 1, min = 1, max = 2),
   #numericInput("nonf", label = "Non-inferiority margin (if applicable)", value = 0, min = 0, max = 100),
   numericInput("bonf", label = "Total p-values being calculated (applies Bonferroni correction)", value = 1, min = 1, max = 99)
@@ -286,6 +287,10 @@ renderUI({
     ),
     div(id = "resultsRow5", # row with stat sig
       paste0(round(rctRslts$cl*100,1),"% statistical significance")
+    ),
+    div(id = "resultsRow6", # row with result determination
+      if (rctRslts$cl*100 > input$confinterval) "This result is statistically significant. The test is conclusive." 
+      else "This result is not statistically significant. The test is inconclusive."
     )
   )
 })
@@ -507,7 +512,7 @@ Predicting revenue impact is tricky and we recommend extreme caution before book
 
 Row {data-height=50}
 -----------------------------------------------------------------------
-version 1.5  
+version 1.6  
 To see version history, report bugs and submit feature requests [click here](https://github.com/alphanumerritt/abtestanalysis/issues){target="_blank"}.
 
 <!-- Continuous Metric {data-icon="fa-sort-numeric-down"} -->
