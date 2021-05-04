@@ -13,6 +13,9 @@ Note: there is an opacity applied to the custom colors.
 See the live version here: https://sdidev.shinyapps.io/ABTestAnalysis/
 
 ## Version History
+#### 1.6 - 5/4/21
+- Changed confidence interval percentage to significance threshold and clarified that would also be used to calculate confidence intervals
+- Used significance threshold to determine test outcome (significant or inconclusive)
 #### 1.5 - 2/25/21
 - Fixed pvalue calculations for 2-tail tests with small effects
 - Updated bookmarking to exclude hypothesis so that long hypotheses won't break links

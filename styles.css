@@ -53,6 +53,13 @@ h1 {
 	padding-top: 30px;
 }
 
+/* Test outcome */
+#resultsRow6 {
+	padding-top: 0px;
+	font-size: 12px;
+	color: #989494;
+}
+
 /* Full results table shrink row size */
 .gt_row {
 	padding-top:1px !important;
@@ -96,7 +103,7 @@ p, a, body {
     padding: 6px;
     background: #1967be;
     color: white;
-    border-color: #868383;	
+    border-color: #868383;
 }
 
 /* screen shot formats */
@@ -143,10 +150,10 @@ p, a, body {
 
 /* Format the title bar */
 .navbar{
-  font-family: "Lato",helvetica,arial,sans-serf; 
+  font-family: "Lato",helvetica,arial,sans-serf;
   background-color: #000000;
   text-align: center;
-} 
+}
 
 /* Navbar lineheight */
 .navbar-nav>li>a {
@@ -203,7 +210,7 @@ ul.nav.navbar-nav.navbar-right li {
   position: relative;
   transition-duration: 0.5s;
 }
-  
+
 ul.nav.navbar-nav.navbar-right li a {
   color: #fff;
   font-weight: normal;
