@@ -26,6 +26,7 @@ library(tidyr)
 library(dplyr)
 library(scales)
 library(capture)
+library(shinyWidgets)
 
 # Default images placed in reactive variable
 img1a = base64enc::dataURI(file = "placeholderImageA.png", mime = "image/png")
@@ -132,8 +133,19 @@ observeEvent(c(input$cva, input$cvb, input$traffa, input$traffb, input$confinter
 
 Sidebar {.sidebar data-width=270}
 ===================================== 
+```{r metric_type}
+inputPanel(
+    h4("Calculator Setting"),
+    sliderTextInput("metric", label = "Select your metric type", grid = FALSE, force_edges = TRUE,
+    choices = c("Binomial", "Continuous")),
+  div(id = "metric_instr",
+      "Conversion rates and proportions are binomial metrics. Revenue, time-on-site and such are continous metrics. For continuous, you'll need to enter a standard deviation calculated separately.")
+)
 
-```{r inputs}
+```
+
+
+```{r test_inputs}
 inputPanel(
   h4("Control Variation"),
   numericInput("cva", label = "Control Conversions", value = 890, min = 0),
@@ -148,7 +160,7 @@ inputPanel(
 
 ```
 
-```{r configinputs}
+```{r config_inputs}
 
 inputPanel(
   h4("Test Configuration Inputs"),
@@ -160,7 +172,7 @@ inputPanel(
 
 ```
 
-```{r revinputs}
+```{r rev_inputs}
 
 inputPanel(
   h4("Revenue Projection Inputs"),
@@ -169,7 +181,7 @@ inputPanel(
 )
 ```
 
-```{r custominputs}
+```{r custom_inputs}
 
 inputPanel(
   h4("Customize Test Details"),
@@ -191,7 +203,7 @@ inputPanel(
 
 ```
 
-```{r pdfexport}
+```{r pdf_export}
 # EXPORT TO PDF
 # Package from github: remotes::install_github("dreamRs/capture")
 renderUI({
@@ -515,5 +527,4 @@ Row {data-height=50}
 version 1.6  
 To see version history, report bugs and submit feature requests [click here](https://github.com/alphanumerritt/abtestanalysis/issues){target="_blank"}.
 
-<!-- Continuous Metric {data-icon="fa-sort-numeric-down"} -->
-<!-- ===================================== -->
+
