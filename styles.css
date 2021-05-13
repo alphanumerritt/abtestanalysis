@@ -148,12 +148,8 @@ p, a, body {
 	margin-top:13px;
 }
 
-/* Format the title bar */
-.navbar{
-  font-family: "Lato",helvetica,arial,sans-serf;
-  background-color: #000000;
-  text-align: center;
-}
+
+/* LOTS of stuff here just to get the navigation bar in order */
 
 /* Navbar lineheight */
 .navbar-nav>li>a {
@@ -162,12 +158,10 @@ p, a, body {
 	padding-bottom: 10px !important;
 }
 
-/* LOTS of stuff here just to get the navigation bar in order */
-
 .navbar-inverse {
   background-color: #221f20;
   border-color: none;
-  padding: 10px;
+  padding: 0px;
 }
 
 .navbar-right {
@@ -183,10 +177,10 @@ ul.nav.navbar-nav.navbar-right {
   visibility: visible;
   opacity: 1;
   display: block;
-  min-width: 300px;
   position: relative;
   transition: all 0.5s ease;
-  padding: 12px 10px 12px 10px;
+  padding: 10px 15px;
+  margin: 5px;
 }
 
 ul.nav.navbar-nav.navbar-right::before {
@@ -216,10 +210,6 @@ ul.nav.navbar-nav.navbar-right li a {
   font-weight: normal;
   font-size: 0.9em;
     padding: 5px 0 5px 5px;
-}
-
-ul.nav.navbar-nav.navbar-right li:hover {
-  background: #00727C;
 }
 
 ul.nav.navbar-nav.navbar-right li>a:hover {

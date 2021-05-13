@@ -26,6 +26,7 @@ library(tidyr)
 library(dplyr)
 library(scales)
 library(capture)
+library(shinyWidgets)
 
 # Default images placed in reactive variable
 img1a = base64enc::dataURI(file = "placeholderImageA.png", mime = "image/png")
@@ -132,8 +133,20 @@ observeEvent(c(input$cva, input$cvb, input$traffa, input$traffb, input$confinter
 
 Sidebar {.sidebar data-width=270}
 ===================================== 
+```{r metric_type, include=FALSE}
+# include = FALSE iskeeping this invisible for now
+inputPanel(
+    h4("Calculator Setting"),
+    sliderTextInput("metric", label = "Select your metric type", grid = FALSE, force_edges = TRUE,
+    choices = c("Binomial", "Continuous")),
+  div(id = "metric_instr",
+      "Conversion rates and proportions are binomial metrics. Revenue, time-on-site and such are continous metrics. For continuous, you'll need to enter a standard deviation calculated separately.")
+)
 
-```{r inputs}
+```
+
+
+```{r test_inputs}
 inputPanel(
   h4("Control Variation"),
   numericInput("cva", label = "Control Conversions", value = 890, min = 0),
@@ -148,7 +161,7 @@ inputPanel(
 
 ```
 
-```{r configinputs}
+```{r config_inputs}
 
 inputPanel(
   h4("Test Configuration Inputs"),
@@ -160,7 +173,7 @@ inputPanel(
 
 ```
 
-```{r revinputs}
+```{r rev_inputs}
 
 inputPanel(
   h4("Revenue Projection Inputs"),
@@ -169,7 +182,7 @@ inputPanel(
 )
 ```
 
-```{r custominputs}
+```{r custom_inputs}
 
 inputPanel(
   h4("Customize Test Details"),
@@ -191,7 +204,7 @@ inputPanel(
 
 ```
 
-```{r pdfexport}
+```{r pdf_export}
 # EXPORT TO PDF
 # Package from github: remotes::install_github("dreamRs/capture")
 renderUI({
@@ -409,12 +422,19 @@ rmarkdown::render_delayed({
       CVR = c(rnorm(n = sims, mean = rctRslts$cvra, sd = rctRslts$SEa), rnorm(n = sims, mean = rctRslts$cvrb, sd = rctRslts$SEb)))
   
     # plot the distributions
-    ggplot(df, aes(x = CVR)) +
-      geom_density(aes(y=..scaled.., fill = variant), alpha = .5, bw = "SJ", adjust = 3) +
+    # ggplot(df, aes(x = CVR)) +
+    ci_plot <- ggplot(df, aes(x = CVR, fill = variant)) +
+      # geom_density(aes(y=..scaled.., fill = variant), alpha = .5, bw = "SJ", adjust = 3) +
+      geom_density(alpha = .5, bw = "SJ", adjust = 3)
+    
+    y_top <- ggplot_build(ci_plot)$layout$panel_scales_y[[1]]$range$range[[2]]
+    
+    ci_plot +
       scale_fill_manual(values = c(input$hexa,input$hexb)) + # pull in colors from inputs
       labs(x="True Conversion Rate", y="Likelihood") +
       scale_x_continuous(labels = scales::percent) +
-      scale_y_continuous(expand = c(0, 0), limits = c(0,1.2)) + # this fixes spacing around plot
+      scale_y_continuous(expand = expansion(mult = c(0, .1))) + # this fixes spacing around plot
+      # scale_y_continuous(expand = c(0, 0), limits = c(0,1.2)) + # this fixes spacing around plot
       geom_vline(
         xintercept = c(
           rctRslts$loa,
@@ -428,9 +448,11 @@ rmarkdown::render_delayed({
         size = .25,
         color = c(input$hexa, input$hexa,input$hexa, input$hexb,input$hexb,input$hexb) # colors lines with custom colors from inputs
       ) +
-      annotate(geom="text", x= c(rctRslts$loa,rctRslts$lob,rctRslts$cvra,rctRslts$cvrb,rctRslts$upa,rctRslts$upb), # adds line labels
-         y = c(.2,.5,.2,.5,.2,.5),
-         vjust = "center",   # > +0.1 range pushes the text annotation down vertically
+      annotate(geom="text", 
+         x= c(rctRslts$loa,rctRslts$lob,rctRslts$cvra,rctRslts$cvrb,rctRslts$upa,rctRslts$upb), # adds line labels
+         # y = c(.2,.5,.2,.5,.2,.5),
+         y = rep(c(y_top * .2, y_top * .5),3),
+         vjust = 0.5, 
          label= c(
            paste0(round(rctRslts$loa*100,1),"%"),
            paste0(round(rctRslts$lob*100,1),"%"),
@@ -443,14 +465,14 @@ rmarkdown::render_delayed({
          size = 4.0) +
       annotate(geom="text", # adds variant labels from inputs
          x= c(rctRslts$cvra,rctRslts$cvrb),
-         y = 1.1,
+         y = y_top * 1.1,
          hjust = "center",
          label= c(input$expA,input$expB),
          fontface = "bold",
          size = 4.0) +
       annotate(geom="pointrange", # adds interval lines
                x = c(rctRslts$cvra,rctRslts$cvrb),
-               y = c(.1,.4),
+               y = c(y_top * .1, y_top * .4),
                xmin = c(rctRslts$loa,rctRslts$lob),
                xmax = c(rctRslts$upa,rctRslts$upb),
                #vjust = c(-3,-3.5),
@@ -512,8 +534,7 @@ Predicting revenue impact is tricky and we recommend extreme caution before book
 
 Row {data-height=50}
 -----------------------------------------------------------------------
-version 1.6  
+version 2.0  
 To see version history, report bugs and submit feature requests [click here](https://github.com/alphanumerritt/abtestanalysis/issues){target="_blank"}.
 
-<!-- Continuous Metric {data-icon="fa-sort-numeric-down"} -->
-<!-- ===================================== -->
+
