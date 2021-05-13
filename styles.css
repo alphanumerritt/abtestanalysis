@@ -1,12 +1,5 @@
 /* AB test results css */
 
-/*body  max-width*/
-*{
-	margin:0px;
-	padding:0px;
-	max-width:auto;
-}
-
 /* Format input headings */
 h4 {
     font-size: 16px;
