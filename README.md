@@ -13,6 +13,10 @@ Note: there is an opacity applied to the custom colors.
 See the live version here: https://sdidev.shinyapps.io/ABTestAnalysis/
 
 ## Version History
+#### 2.0 - 5/13/21
+- Laying groundwork for adding support for continuous metrics. Nothing visible so far. But working behind scenes.
+- Fixed some display issues with the navigation, tightened up, cleaned up CSS
+- Fixed scaling issue in conversion rate confidence interval chart which didn't allow charts to scale when uneven sampling was occuring
 #### 1.6 - 5/4/21
 - Changed confidence interval percentage to significance threshold and clarified that would also be used to calculate confidence intervals
 - Used significance threshold to determine test outcome (significant or inconclusive)
