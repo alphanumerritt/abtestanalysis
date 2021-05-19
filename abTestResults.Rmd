@@ -71,14 +71,15 @@ onBookmarked(function(url) {
 </div>
 
 
-```{r binomialcalculations, include=FALSE}
+```{r calculations_binomial, include=FALSE}
 # Declare reactive variables to hold all results for use throughout
 rctRslts <- reactiveValues(pv = NULL, cl = NULL, upa = NULL, upb = NULL, upd = NULL, loa = NULL, lob = NULL, lod = NULL, diff = NULL, seDif = NULL, z = NULL)
 
 # Main event observer to listen for input changes and to calculate main results
-observeEvent(c(input$cva, input$cvb, input$traffa, input$traffb, input$confinterval, input$tails, input$nonf, input$bonf), {
+observeEvent(c(input$metric, input$cva, input$cvb, input$traffa, input$traffb, input$confinterval, input$tails, input$nonf, input$bonf), {
   
-  # Don't execut unless traffic inputs are greater than conversion inputs
+  # Don't execute unless traffic inputs are greater than conversion inputs
+  req(input$metric == "Binomial")
   req(input$traffa > input$cva)
   req(input$traffb > input$cvb)
   req(input$cva > 0)
@@ -129,14 +130,76 @@ observeEvent(c(input$cva, input$cvb, input$traffa, input$traffb, input$confinter
   
 ```
 
+```{r calculations_continuous, include=FALSE}
+
+# Main event observer to listen for input changes and to calculate main results
+observeEvent(c(input$metric, input$mean_a, input$mean_b, input$traffa_c, input$traffb_c, input$sd_a, input$sd_b, input$confinterval, input$tails, input$nonf, input$bonf), {
+  
+  # Don't execute unless traffic inputs are greater than conversion inputs
+  req(input$metric == "Continuous")
+  req(input$mean_a > 0)
+  req(input$mean_b > 0)
+  req(input$sd_a > 0)
+  req(input$sd_b > 0)
+  req(input$traffa_c > 0)
+  req(input$traffb_c > 0)
+
+  
+  mu_a <- input$mean_a
+  mu_b <- input$mean_b
+  sd_a <- input$sd_a
+  sd_b <- input$sd_b
+  ca <- input$cva
+  cb <- input$cvb
+  ta <- input$traffa_c
+  tb <- input$traffb_c
+  reldiff <- mu_b/mu_a-1
+  sd_pool <- sqrt(((ta-1) * sd_a^2 + (tb-1) * sd_b^2)/(ta + tb - 2))
+  SEa <- sd_a/sqrt(ta)
+  SEb <- sd_b/sqrt(tb)
+  SEdiff <- sd_pool * sqrt(1/ta + 1/tb)
+  ci <- input$confinterval/100
+  ciZ <- abs(qnorm((1-ci)/2))
+  cila <- mu_a - SEa * ciZ
+  ciua <- mu_a + SEa * ciZ
+  cilb <- mu_b - SEb * ciZ
+  ciub <- mu_b + SEb * ciZ
+  cild <- ((mu_b - mu_a) - SEdiff * ciZ)/mu_a
+  ciud <- ((mu_b - mu_a) + SEdiff * ciZ)/mu_a
+  z <- (mu_b - mu_a) / SEdiff
+  pval <- (1-pnorm(abs(z))) * input$tails
+  pval <- p.adjust(pval, method = "bonferroni", n = input$bonf)
+  conf <- 1-pval
+  testpower <- power.t.test(n = (ta + tb)/2, delta = mu_b - mu_a, sd = sd_pool, sig.level = 1 - ci, alternative = ifelse(input$tails < 2, "one", "two"), type = "two.sample")
+
+  # Dump all the values into the reactive variables
+  rctRslts$pv <- pval
+  rctRslts$cl <- conf
+  rctRslts$upa <- ciua
+  rctRslts$upb <- ciub
+  rctRslts$upd <- ciud
+  rctRslts$loa <- cila
+  rctRslts$lob <- cilb
+  rctRslts$lod <- cild
+  rctRslts$diff <- reldiff
+  rctRslts$seDif <- SEdiff
+  rctRslts$SEa <- SEa
+  rctRslts$SEb <- SEb
+  rctRslts$cvra <- mu_a
+  rctRslts$cvrb <- mu_b
+  rctRslts$z <- z
+  rctRslts$pwr <- testpower$power
+})
+  
+```
 
 
 Sidebar {.sidebar data-width=270}
 ===================================== 
-```{r metric_type, include=FALSE}
+```{r metric_type}
 # include = FALSE iskeeping this invisible for now
 inputPanel(
-    h4("Calculator Setting"),
+    h4("Calculator Metric Setting"),
     sliderTextInput("metric", label = "Select your metric type", grid = FALSE, force_edges = TRUE,
     choices = c("Binomial", "Continuous")),
   div(id = "metric_instr",
@@ -147,18 +210,49 @@ inputPanel(
 
 
 ```{r test_inputs}
-inputPanel(
-  h4("Control Variation"),
-  numericInput("cva", label = "Control Conversions", value = 890, min = 0),
-  numericInput("traffa", label = "Control Traffic", value = 10000, min = 0)
-)
+# inputPanel(
+#   h4("Control Variation"),
+#   numericInput("cva", label = "Control Conversions", value = 890, min = 0),
+#   numericInput("traffa", label = "Control Traffic", value = 10000, min = 0)
+# )
+# 
+# inputPanel(
+#   h4("Test Variation"),
+#   numericInput("cvb", label = "Test Conversions", value = 920, min = 0),
+#   numericInput("traffb", label = "Test Traffic", value = 10000, min = 0)
+# )
 
-inputPanel(
-  h4("Test Variation"),
-  numericInput("cvb", label = "Test Conversions", value = 920, min = 0),
-  numericInput("traffb", label = "Test Traffic", value = 10000, min = 0)
-)
+observeEvent(input$metric,{
+  if (input$metric == "Binomial") {
+    output$results_inputs <- renderUI({
+      inputPanel(
+        h4("Control Variation"),
+        numericInput("cva", label = "Control Conversions", value = 890, min = 0),
+        numericInput("traffa", label = "Control Traffic", value = 10000, min = 0),
+      
+        h4("Test Variation"),
+        numericInput("cvb", label = "Test Conversions", value = 920, min = 0),
+        numericInput("traffb", label = "Test Traffic", value = 10000, min = 0)
+      )
+    })
+  } else {
+    output$results_inputs <- renderUI({
+      inputPanel(
+        h4("Control Variation"),
+        numericInput("mean_a", label = "Control Mean", value = 2.57, min = 0),
+        numericInput("sd_a", label = "Control Standard Deviation", value = 19, min = 0),
+        numericInput("traffa_c", label = "Control Traffic", value = 10000, min = 0),
+      
+        h4("Test Variation"),
+        numericInput("mean_b", label = "Test Mean", value = 2.98, min = 0),
+        numericInput("sd_b", label = "Test Standard Deviation", value = 24, min = 0),
+        numericInput("traffb_c", label = "Test Traffic", value = 10000, min = 0)
+      )
+    })
+  }
+})
 
+uiOutput("results_inputs")
 ```
 
 ```{r config_inputs}
@@ -409,7 +503,7 @@ render_gt({
 }, align = "center")
 ```
 
-### Confidence Intervals of Conversion Rates
+### Confidence Intervals of `r if(2>1) renderPrint({input$metric}) else "That"` Conversion Rates
 ```{r conversionRatesIntervals}
 rmarkdown::render_delayed({
   renderPlot({
