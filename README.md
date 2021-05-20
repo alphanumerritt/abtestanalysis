@@ -13,6 +13,9 @@ Note: there is an opacity applied to the custom colors.
 See the live version here: https://sdidev.shinyapps.io/ABTestAnalysis/
 
 ## Version History
+#### 2.1 - 5/20/21
+- Added support for continuous metrics
+- Added body width constraints to improve chart presentation on large screens
 #### 2.0 - 5/13/21
 - Laying groundwork for adding support for continuous metrics. Nothing visible so far. But working behind scenes.
 - Fixed some display issues with the navigation, tightened up, cleaned up CSS

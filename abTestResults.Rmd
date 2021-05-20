@@ -79,7 +79,7 @@ rctRslts <- reactiveValues(pv = NULL, cl = NULL, upa = NULL, upb = NULL, upd = N
 observeEvent(c(input$metric, input$cva, input$cvb, input$traffa, input$traffb, input$confinterval, input$tails, input$nonf, input$bonf), {
   
   # Don't execute unless traffic inputs are greater than conversion inputs
-  req(input$metric == "Binomial")
+  req(input$metric == "Binomial (Conversion Rate)")
   req(input$traffa > input$cva)
   req(input$traffb > input$cvb)
   req(input$cva > 0)
@@ -136,7 +136,7 @@ observeEvent(c(input$metric, input$cva, input$cvb, input$traffa, input$traffb, i
 observeEvent(c(input$metric, input$mean_a, input$mean_b, input$traffa_c, input$traffb_c, input$sd_a, input$sd_b, input$confinterval, input$tails, input$nonf, input$bonf), {
   
   # Don't execute unless traffic inputs are greater than conversion inputs
-  req(input$metric == "Continuous")
+  req(input$metric != "Binomial (Conversion Rate)")
   req(input$mean_a > 0)
   req(input$mean_b > 0)
   req(input$sd_a > 0)
@@ -200,10 +200,11 @@ Sidebar {.sidebar data-width=270}
 # include = FALSE iskeeping this invisible for now
 inputPanel(
     h4("Calculator Metric Setting"),
-    sliderTextInput("metric", label = "Select your metric type", grid = FALSE, force_edges = TRUE,
-    choices = c("Binomial", "Continuous")),
+    awesomeRadio("metric", label = "Select your metric type",
+      choices = c("Binomial (Conversion Rate)", "Continuous (Revenue)*"),
+      selected = "Binomial (Conversion Rate)"),
   div(id = "metric_instr",
-      "Conversion rates and proportions are binomial metrics. Revenue, time-on-site and such are continous metrics. For continuous, you'll need to enter a standard deviation calculated separately.")
+      "*For continuous metrics, you'll need to enter standard deviations calculated separately.")
 )
 
 ```
@@ -223,7 +224,7 @@ inputPanel(
 # )
 
 observeEvent(input$metric,{
-  if (input$metric == "Binomial") {
+  if (input$metric == "Binomial (Conversion Rate)") {
     output$results_inputs <- renderUI({
       inputPanel(
         h4("Control Variation"),
@@ -268,12 +269,24 @@ inputPanel(
 ```
 
 ```{r rev_inputs}
+observeEvent(input$metric,{
+  if (input$metric == "Binomial (Conversion Rate)") {
+    lab_val <- "What's the approximate $ value of a conversion?"
+    lab_vol <- "About how many conversions per month does the test audience provide?"
+  } else {
+    lab_val <- "What's the approximate $ value an increment of 1 in your KPI for one visitor or visit?"
+    lab_vol <- "About how many visits or visitors per month would this change impact?"
+  }
+  output$rev_inputs <- renderUI({
+    inputPanel(
+      h4("Revenue Projection Inputs"),
+      numericInput("convValue", label = lab_val, value = 10, min = 0, max = 10000000),
+      numericInput("convVolume", label = lab_vol, value = 1000, min = 1, max = 10000000)
+    )
+  })
+})
 
-inputPanel(
-  h4("Revenue Projection Inputs"),
-  numericInput("convValue", label = "What's the approximate value of a conversion?", value = 10, min = 0, max = 10000000),
-  numericInput("convVolume", label = "About how many conversions per month does the test audience provide?", value = 1000, min = 1, max = 10000000)
-)
+uiOutput("rev_inputs")
 ```
 
 ```{r custom_inputs}
@@ -363,55 +376,57 @@ Row {data-height=350}
 
 ### Key Results
 ```{r keyResults}
-renderUI({
-  colora <- paste0("color:",input$hexa)
-  colorb <- paste0("color:",input$hexb)
-  colord <- paste0("color:",ifelse(rctRslts$cvrb>rctRslts$cvra,input$hexb,input$hexa))
-  
-  if (input$metric == "Binomial") {
-    labs_results <- c(
-      paste0(round(rctRslts$cvra,1),"%"),
-      paste0(round(rctRslts$cvrb,1),"%")
-    )
-  } else {
-    labs_results <- c(
-      paste0(round(rctRslts$cvra,2)),
-      paste0(round(rctRslts$cvrb,2))
-    )
-  }
-  
-  div(id = "resultsContainer", # outer shell
-    div(id = "resultsRow1", # row with variant names
-      div(id = "resultsRow1Cell1", style = colora,
-        input$expA
-      ),
-      div(id = "resultsRow1Cell2", style = colorb,
-        input$expB
+rmarkdown::render_delayed({
+  renderUI({
+    colora <- paste0("color:",input$hexa)
+    colorb <- paste0("color:",input$hexb)
+    colord <- paste0("color:",ifelse(rctRslts$cvrb>rctRslts$cvra,input$hexb,input$hexa))
+    
+    if (input$metric == "Binomial (Conversion Rate)") {
+      labs_results <- c(
+        paste0(round(rctRslts$cvra,1),"%"),
+        paste0(round(rctRslts$cvrb,1),"%")
       )
-      
-    ),
-    div(id = "resultsRow2", # row with conversion rates
-      div(id = "resultsRow2Cell1",
-        labs_results[1]
-      ),
-      div(id = "resultsRow2Cell2",
-        labs_results[2]
+    } else {
+      labs_results <- c(
+        paste0(round(rctRslts$cvra,2)),
+        paste0(round(rctRslts$cvrb,2))
       )
-    ),
-    div(id = "resultsRow3", style = colord, # row with conversion difference
-        paste0(round(rctRslts$diff*100,1),"%")
-    ),
-    div(id = "resultsRow4", # word
-        "difference"
-    ),
-    div(id = "resultsRow5", # row with stat sig
-      paste0(round(rctRslts$cl*100,1),"% statistical significance")
-    ),
-    div(id = "resultsRow6", # row with result determination
-      if (rctRslts$cl*100 > input$confinterval) "This result is statistically significant. The test is conclusive." 
-      else "This result is not statistically significant. The test is inconclusive."
+    }
+    
+    div(id = "resultsContainer", # outer shell
+      div(id = "resultsRow1", # row with variant names
+        div(id = "resultsRow1Cell1", style = colora,
+          input$expA
+        ),
+        div(id = "resultsRow1Cell2", style = colorb,
+          input$expB
+        )
+        
+      ),
+      div(id = "resultsRow2", # row with conversion rates
+        div(id = "resultsRow2Cell1",
+          labs_results[1]
+        ),
+        div(id = "resultsRow2Cell2",
+          labs_results[2]
+        )
+      ),
+      div(id = "resultsRow3", style = colord, # row with conversion difference
+          paste0(round(rctRslts$diff*100,1),"%")
+      ),
+      div(id = "resultsRow4", # word
+          "difference"
+      ),
+      div(id = "resultsRow5", # row with stat sig
+        paste0(round(rctRslts$cl*100,1),"% statistical significance")
+      ),
+      div(id = "resultsRow6", # row with result determination
+        if (rctRslts$cl*100 > input$confinterval) "This result is statistically significant. The test is conclusive." 
+        else "This result is not statistically significant. The test is inconclusive."
+      )
     )
-  )
+  })
 })
 ```
 
@@ -429,7 +444,7 @@ rmarkdown::render_delayed({
     df <- data.frame(Effect = rnorm(n = sims, mean = ptDiff, sd = rctRslts$seDif)) %>%
       mutate(relEffect = Effect/rctRslts$cvra) # make simulated effects relative to control cvr
     
-    ax_lab_x <- if_else(input$metric == "Binomial", "True difference in conversion rates", "True difference in means")
+    ax_lab_x <- if_else(input$metric == "Binomial (Conversion Rate)", "True difference in conversion rates", "True difference in means")
     
     # plot the distribution
     ggplot(df, aes(x = relEffect)) +
@@ -459,7 +474,7 @@ Row {data-height=350}
 
 ```{r fullStats}
 render_gt({
-  if (input$metric == "Binomial") {
+  if (input$metric == "Binomial (Conversion Rate)") {
     metric_vars <- list(
       lab_a = "Conversion Rate A",
       lab_b = "Conversion Rate B",
@@ -543,7 +558,7 @@ rmarkdown::render_delayed({
   
     sims <- 10000 # how many simulations of conversion rate for chart
     
-    if (input$metric == "Binomial") {
+    if (input$metric == "Binomial (Conversion Rate)") {
       metric_vars <- list(
         lab_x = "True Conversion Rate",
         lab_annos = c(
@@ -683,7 +698,7 @@ Predicting revenue impact is tricky and we recommend extreme caution before book
 
 Row {data-height=50}
 -----------------------------------------------------------------------
-version 2.0  
+version 2.1  
 To see version history, report bugs and submit feature requests [click here](https://github.com/alphanumerritt/abtestanalysis/issues){target="_blank"}.
 
 

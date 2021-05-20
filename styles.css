@@ -1,5 +1,11 @@
 /* AB test results css */
 
+/* Limit width on big screens */
+body {
+	max-width: 1600px;
+	margin: auto;
+}
+
 /* Format input headings */
 h4 {
     font-size: 16px;
