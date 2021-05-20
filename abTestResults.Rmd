@@ -464,18 +464,19 @@ render_gt({
       lab_a = "Conversion Rate A",
       lab_b = "Conversion Rate B",
       pct_r = c(1:3,10,11),
-      num_r = c(4:9)
+      num2_r = c(8),
+      num4_r = c(4:7,9)
       )
   } else {
     metric_vars <- list(
       lab_a = "Mean A",
       lab_b = "Mean B",
       pct_r = c(3,10,11),
-      num_r = c(1,2,4:9)
+      num2_r = c(1,2,4,8),
+      num4_r = c(5:7,9)
       )
   }
   
-  print(attributes(metric_vars))
   # create data frame of all the pertinent data
   df <- data.frame(
     Metric = c(
@@ -523,7 +524,8 @@ render_gt({
   # put the data frame in a nice table format
   gt(df) %>%
     fmt_percent(columns=vars(Lower,Observed,Upper), rows=metric_vars$pct_r, decimals = 1) %>%
-    fmt_number(columns=vars(Lower,Observed,Upper), rows=metric_vars$num_r, decimals = 4) %>%
+    fmt_number(columns=vars(Lower,Observed,Upper), rows=metric_vars$num2_r, decimals = 2) %>%
+    fmt_number(columns=vars(Lower,Observed,Upper), rows=metric_vars$num4_r, decimals = 4) %>%
     cols_align(align = "left", columns = vars(Metric)) %>%
     cols_align(align = "center", columns = vars(Lower, Observed, Upper)) %>%
     cols_label(Metric = "Measure") %>%
@@ -541,6 +543,33 @@ rmarkdown::render_delayed({
   
     sims <- 10000 # how many simulations of conversion rate for chart
     
+    if (input$metric == "Binomial") {
+      metric_vars <- list(
+        lab_x = "True Conversion Rate",
+        lab_annos = c(
+           paste0(round(rctRslts$loa*100,1),"%"),
+           paste0(round(rctRslts$lob*100,1),"%"),
+           paste0(round(rctRslts$cvra*100,1),"%"),
+           paste0(round(rctRslts$cvrb*100,1),"%"),
+           paste0(round(rctRslts$upa*100,1),"%"),
+           paste0(round(rctRslts$upb*100,1),"%")
+         ),
+        plot_scale_x = scale_x_continuous(labels = scales::percent)
+        )
+    } else {
+      metric_vars <- list(
+        lab_x = "True Mean",
+        lab_annos = c(
+           paste0(round(rctRslts$loa,2)),
+           paste0(round(rctRslts$lob,2)),
+           paste0(round(rctRslts$cvra,2)),
+           paste0(round(rctRslts$cvrb,2)),
+           paste0(round(rctRslts$upa,2)),
+           paste0(round(rctRslts$upb,2))
+         ),
+        plot_scale_x = scale_x_continuous(labels = scales::label_comma())
+        )
+    }
     # create data frame of simulated conversion rates based on observed CVRs and standard errors
     df <- data.frame(
       variant = factor(c(rep("A", sims),rep("B", sims))),
@@ -556,8 +585,8 @@ rmarkdown::render_delayed({
     
     ci_plot +
       scale_fill_manual(values = c(input$hexa,input$hexb)) + # pull in colors from inputs
-      labs(x="True Conversion Rate", y="Likelihood") +
-      scale_x_continuous(labels = scales::percent) +
+      labs(x=metric_vars$lab_x, y="Likelihood") +
+      metric_vars$plot_scale_x +
       scale_y_continuous(expand = expansion(mult = c(0, .1))) + # this fixes spacing around plot
       # scale_y_continuous(expand = c(0, 0), limits = c(0,1.2)) + # this fixes spacing around plot
       geom_vline(
@@ -578,13 +607,7 @@ rmarkdown::render_delayed({
          # y = c(.2,.5,.2,.5,.2,.5),
          y = rep(c(y_top * .2, y_top * .5),3),
          vjust = 0.5, 
-         label= c(
-           paste0(round(rctRslts$loa*100,1),"%"),
-           paste0(round(rctRslts$lob*100,1),"%"),
-           paste0(round(rctRslts$cvra*100,1),"%"),
-           paste0(round(rctRslts$cvrb*100,1),"%"),
-           paste0(round(rctRslts$upa*100,1),"%"),
-           paste0(round(rctRslts$upb*100,1),"%")),
+         label= metric_vars$lab_annos,
          fontface = "bold",
          angle = 90,
          size = 4.0) +
