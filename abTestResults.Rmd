@@ -368,6 +368,18 @@ renderUI({
   colorb <- paste0("color:",input$hexb)
   colord <- paste0("color:",ifelse(rctRslts$cvrb>rctRslts$cvra,input$hexb,input$hexa))
   
+  if (input$metric == "Binomial") {
+    labs_results <- c(
+      paste0(round(rctRslts$cvra,1),"%"),
+      paste0(round(rctRslts$cvrb,1),"%")
+    )
+  } else {
+    labs_results <- c(
+      paste0(round(rctRslts$cvra,2)),
+      paste0(round(rctRslts$cvrb,2))
+    )
+  }
+  
   div(id = "resultsContainer", # outer shell
     div(id = "resultsRow1", # row with variant names
       div(id = "resultsRow1Cell1", style = colora,
@@ -380,10 +392,10 @@ renderUI({
     ),
     div(id = "resultsRow2", # row with conversion rates
       div(id = "resultsRow2Cell1",
-        paste0(round(rctRslts$cvra*100,1),"%")
+        labs_results[1]
       ),
       div(id = "resultsRow2Cell2",
-        paste0(round(rctRslts$cvrb*100,1),"%")
+        labs_results[2]
       )
     ),
     div(id = "resultsRow3", style = colord, # row with conversion difference
@@ -417,10 +429,12 @@ rmarkdown::render_delayed({
     df <- data.frame(Effect = rnorm(n = sims, mean = ptDiff, sd = rctRslts$seDif)) %>%
       mutate(relEffect = Effect/rctRslts$cvra) # make simulated effects relative to control cvr
     
+    ax_lab_x <- if_else(input$metric == "Binomial", "True difference in conversion rates", "True difference in means")
+    
     # plot the distribution
     ggplot(df, aes(x = relEffect)) +
       geom_density(aes(y=..scaled..), alpha = .2, bw = "SJ", adjust = 2, fill = input$hexd) +
-      labs(x="True difference in conversion rates", y="Likelihood") +
+      labs(x=ax_lab_x, y="Likelihood") +
       scale_x_continuous(labels = scales::percent) +
       scale_y_continuous(expand = c(0, 0), limits = c(0,1.2)) + # this fixes spacing around plot
       geom_vline(xintercept = c(rctRslts$lod,rctRslts$upd,rctRslts$diff), linetype = "dashed", size = .25, color = input$hexd) +
@@ -439,20 +453,36 @@ rmarkdown::render_delayed({
 })
 ```
 
-Row Row {data-height=350}
+Row {data-height=350}
 -----------------------------------------------------------------------
 ### Calculations
 
 ```{r fullStats}
 render_gt({
-
+  if (input$metric == "Binomial") {
+    metric_vars <- list(
+      lab_a = "Conversion Rate A",
+      lab_b = "Conversion Rate B",
+      pct_r = c(1:3,10,11),
+      num_r = c(4:9)
+      )
+  } else {
+    metric_vars <- list(
+      lab_a = "Mean A",
+      lab_b = "Mean B",
+      pct_r = c(3,10,11),
+      num_r = c(1,2,4:9)
+      )
+  }
+  
+  print(attributes(metric_vars))
   # create data frame of all the pertinent data
   df <- data.frame(
     Metric = c(
-      "Conversion Rate A",
-      "Conversion Rate B",
-      "Difference (relative)",
-      "Difference (pts.)",
+      metric_vars$lab_a,
+      metric_vars$lab_b,
+      "Difference (B/A - 1)",
+      "Difference (B - A)",
       "Standard Error A",
       "Standard Error B",
       "Standard Error Difference",
@@ -492,8 +522,8 @@ render_gt({
   
   # put the data frame in a nice table format
   gt(df) %>%
-    fmt_percent(columns=vars(Lower,Observed,Upper), rows=c(1:3,10,11), decimals = 1) %>%
-    fmt_number(columns=vars(Lower,Observed,Upper), rows=c(4:9), decimals = 4) %>%
+    fmt_percent(columns=vars(Lower,Observed,Upper), rows=metric_vars$pct_r, decimals = 1) %>%
+    fmt_number(columns=vars(Lower,Observed,Upper), rows=metric_vars$num_r, decimals = 4) %>%
     cols_align(align = "left", columns = vars(Metric)) %>%
     cols_align(align = "center", columns = vars(Lower, Observed, Upper)) %>%
     cols_label(Metric = "Measure") %>%
@@ -503,7 +533,8 @@ render_gt({
 }, align = "center")
 ```
 
-### Confidence Intervals of `r if(2>1) renderPrint({input$metric}) else "That"` Conversion Rates
+### Confidence Intervals of Variants
+
 ```{r conversionRatesIntervals}
 rmarkdown::render_delayed({
   renderPlot({
@@ -582,6 +613,7 @@ rmarkdown::render_delayed({
 Row {data-height=350}
 -----------------------------------------------------------------------
 ### 6 Month Revenue Projections
+
 ```{r revprojections}
 rmarkdown::render_delayed({
   renderPlot({
