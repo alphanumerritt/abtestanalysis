@@ -1,5 +1,5 @@
 ---
-title: "Experimentation Tools"
+title: "Experimentation Tools | Test Results Analysis"
 output: 
   flexdashboard::flex_dashboard:
     orientation: rows
@@ -49,8 +49,8 @@ reactiveImages <- reactiveValues(imgA = img1a, imgB = img1b)
 $('.navbar-logo').wrap('<a href="https://www.searchdiscovery.com/how-we-help/services/optimization/" target=_blank>');
 </script>
 
-<div style="display: none;">
-```{r url_bookmarking}
+<!-- <div style="display: none;"> -->
+```{r url_bookmarking, include=FALSE}
 # The code below uses query parameters in the URL of the page so that the total configuration 
 # is captured in the URL, enabling someone to "come back" to the exact configuration at any point.
 # See details at: https://shiny.rstudio.com/reference/shiny/1.5.0/updateQueryString.html.
@@ -68,7 +68,7 @@ onBookmarked(function(url) {
   updateQueryString(url)
 })
 ```
-</div>
+<!-- </div> -->
 
 
 ```{r calculations_binomial, include=FALSE}
@@ -194,8 +194,11 @@ observeEvent(c(input$metric, input$mean_a, input$mean_b, input$traffa_c, input$t
 ```
 
 
-Sidebar {.sidebar data-width=270}
-===================================== 
+<!-- Sidebar {.sidebar data-width=270} -->
+<!-- =====================================  -->
+
+Inputs {.sidebar data-width=270}
+-----------------------------------------------------------------------
 ```{r metric_type}
 # include = FALSE iskeeping this invisible for now
 inputPanel(
@@ -274,8 +277,8 @@ observeEvent(input$metric,{
     lab_val <- "What's the approximate $ value of a conversion?"
     lab_vol <- "About how many conversions per month does the test audience provide?"
   } else {
-    lab_val <- "What's the approximate $ value an increment of 1 in your KPI for one visitor or visit?"
-    lab_vol <- "About how many visits or visitors per month would this change impact?"
+    lab_val <- "What's the $ value of raising your KPI by 1 for a single visit or visitor?"
+    lab_vol <- "About how many visits or visitors per month would the tested change impact?"
   }
   output$rev_inputs <- renderUI({
     inputPanel(
@@ -317,7 +320,8 @@ inputPanel(
 renderUI({
   div(id="exportpdf",
     capture::capture_pdf(
-      selector = ".level1",
+      # selector = ".level1",
+      selector = ".print_area",
       filename = "abTestResults",
       icon("download"), "Export to PDF",
       margin = 2
@@ -327,8 +331,8 @@ renderUI({
 
 ```
 
-Test Analysis <!-- {data-icon="fa-percentage"} -->
-===================================== 
+<!-- Critical to set print area of pdf export. Ends after row with revenue chart -->
+<div class="print_area"> 
 
 Row {.topRow}
 -----------------------------------------------------------------------
@@ -375,13 +379,16 @@ Row {data-height=350}
 -----------------------------------------------------------------------
 
 ### Key Results
+
 ```{r keyResults}
 rmarkdown::render_delayed({
   renderUI({
+    # Get colors from inputs
     colora <- paste0("color:",input$hexa)
     colorb <- paste0("color:",input$hexb)
     colord <- paste0("color:",ifelse(rctRslts$cvrb>rctRslts$cvra,input$hexb,input$hexa))
     
+    # Set a few labels based on metric selection
     if (input$metric == "Binomial (Conversion Rate)") {
       labs_results <- c(
         paste0(round(rctRslts$cvra,1),"%"),
@@ -394,6 +401,7 @@ rmarkdown::render_delayed({
       )
     }
     
+    # Create UI elements in rows of divs
     div(id = "resultsContainer", # outer shell
       div(id = "resultsRow1", # row with variant names
         div(id = "resultsRow1Cell1", style = colora,
@@ -415,7 +423,7 @@ rmarkdown::render_delayed({
       div(id = "resultsRow3", style = colord, # row with conversion difference
           paste0(round(rctRslts$diff*100,1),"%")
       ),
-      div(id = "resultsRow4", # word
+      div(id = "resultsRow4", 
           "difference"
       ),
       div(id = "resultsRow5", # row with stat sig
@@ -433,7 +441,7 @@ rmarkdown::render_delayed({
 
 ### Confidence Interval of Difference
 
-```{r diffConfidenceInterval}
+```{r conf_interval_effect}
 rmarkdown::render_delayed({
   renderPlot({
     
@@ -472,8 +480,9 @@ Row {data-height=350}
 -----------------------------------------------------------------------
 ### Calculations
 
-```{r fullStats}
+```{r table_stats}
 render_gt({
+  # Change some labels and formats based on metric type
   if (input$metric == "Binomial (Conversion Rate)") {
     metric_vars <- list(
       lab_a = "Conversion Rate A",
@@ -536,7 +545,7 @@ render_gt({
       )
   )
   
-  # put the data frame in a nice table format
+  # Put the data frame in a nice table format
   gt(df) %>%
     fmt_percent(columns=vars(Lower,Observed,Upper), rows=metric_vars$pct_r, decimals = 1) %>%
     fmt_number(columns=vars(Lower,Observed,Upper), rows=metric_vars$num2_r, decimals = 2) %>%
@@ -552,12 +561,13 @@ render_gt({
 
 ### Confidence Intervals of Variants
 
-```{r conversionRatesIntervals}
+```{r conf_intervals_means}
 rmarkdown::render_delayed({
   renderPlot({
   
     sims <- 10000 # how many simulations of conversion rate for chart
     
+    # Different labels and formats based on metric type selected
     if (input$metric == "Binomial (Conversion Rate)") {
       metric_vars <- list(
         lab_x = "True Conversion Rate",
@@ -668,7 +678,7 @@ rmarkdown::render_delayed({
     uplabel <- paste0(trunc((100-input$confinterval)/2),"% chance of contributing at least ",revout(rctRslts$upd*revMult2))
     ciLabels <- c(lolabel,uplabel,"")
   
-    # simulat effect sizes then multiply them by conversions and value
+    # simulate effect sizes then multiply them by conversions and value
     df <- data.frame(Effect = rnorm(n = sims, mean = ptDiff, sd = rctRslts$seDif)) %>%
       mutate(revIncrease = Effect * revMult) 
   
@@ -695,6 +705,8 @@ rmarkdown::render_delayed({
 The revenue projections are based on the confidence interval around the difference in conversion rates. These probabilities are applied, without any decay rate, to 6 months of conversion volume at the value provided. The chart shows the cumulative probability of achieving at least a certain value, even if negative.
 
 Predicting revenue impact is tricky and we recommend extreme caution before booking any upside with the finance team. In fact, [we made a whole simulator](https://sdidev.shinyapps.io/test-result-simulator/){target="_blank"} to illustrate why. 
+
+</div> <!-- End of print area -->
 
 Row {data-height=50}
 -----------------------------------------------------------------------

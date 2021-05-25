@@ -186,7 +186,7 @@ ul.nav.navbar-nav.navbar-right {
   position: relative;
   transition: all 0.5s ease;
   padding: 10px 15px;
-  margin: 5px;
+  margin: 7px;
 }
 
 ul.nav.navbar-nav.navbar-right::before {
