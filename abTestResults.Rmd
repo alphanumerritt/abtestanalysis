@@ -72,11 +72,21 @@ onBookmarked(function(url) {
 
 
 ```{r calculations_binomial, include=FALSE}
+# Set a delay render around some inputs so that everything doesn't update repeatedly
+ins_react_b <- debounce(reactive({
+  c(
+    input$cva,
+    input$cvb, 
+    input$traffa,
+    input$traffb
+  )
+  }),750)
+
 # Declare reactive variables to hold all results for use throughout
 rctRslts <- reactiveValues(pv = NULL, cl = NULL, upa = NULL, upb = NULL, upd = NULL, loa = NULL, lob = NULL, lod = NULL, diff = NULL, seDif = NULL, z = NULL)
 
 # Main event observer to listen for input changes and to calculate main results
-observeEvent(c(input$metric, input$cva, input$cvb, input$traffa, input$traffb, input$confinterval, input$tails, input$nonf, input$bonf), {
+observeEvent(c(input$metric, ins_react_b(), input$confinterval, input$tails, input$nonf, input$bonf), {
   
   # Don't execute unless traffic inputs are greater than conversion inputs
   req(input$metric == "Binomial (Conversion Rate)")
@@ -126,14 +136,25 @@ observeEvent(c(input$metric, input$cva, input$cvb, input$traffa, input$traffb, i
   rctRslts$cvrb <- cvrb
   rctRslts$z <- z
   rctRslts$pwr <- testpower$power
-})
+}, ignoreInit = TRUE)
   
 ```
 
 ```{r calculations_continuous, include=FALSE}
+# Set a delay render around some inputs so that everything doesn't update repeatedly
+ins_react_c <- debounce(reactive({
+  c(
+    input$mean_a,
+    input$mean_b, 
+    input$sd_a,
+    input$sd_b,
+    input$traffa_c,
+    input$traffb_c
+  )
+  }),750)
 
 # Main event observer to listen for input changes and to calculate main results
-observeEvent(c(input$metric, input$mean_a, input$mean_b, input$traffa_c, input$traffb_c, input$sd_a, input$sd_b, input$confinterval, input$tails, input$nonf, input$bonf), {
+observeEvent(c(input$metric, ins_react_c(), input$confinterval, input$tails, input$nonf, input$bonf), {
   
   # Don't execute unless traffic inputs are greater than conversion inputs
   req(input$metric != "Binomial (Conversion Rate)")
@@ -189,7 +210,7 @@ observeEvent(c(input$metric, input$mean_a, input$mean_b, input$traffa_c, input$t
   rctRslts$cvrb <- mu_b
   rctRslts$z <- z
   rctRslts$pwr <- testpower$power
-})
+}, ignoreInit = TRUE)
   
 ```
 
@@ -243,18 +264,18 @@ observeEvent(input$metric,{
     output$results_inputs <- renderUI({
       inputPanel(
         h4("Control Variation"),
-        numericInput("mean_a", label = "Control Mean", value = 2.57, min = 0),
-        numericInput("sd_a", label = "Control Standard Deviation", value = 19, min = 0),
+        numericInput("mean_a", label = "Control Mean", value = 2.57, min = 0, step = 0.1),
+        numericInput("sd_a", label = "Control Standard Deviation", value = 19, min = 0, step = 0.1),
         numericInput("traffa_c", label = "Control Traffic", value = 10000, min = 0),
       
         h4("Test Variation"),
-        numericInput("mean_b", label = "Test Mean", value = 2.98, min = 0),
-        numericInput("sd_b", label = "Test Standard Deviation", value = 24, min = 0),
+        numericInput("mean_b", label = "Test Mean", value = 2.98, min = 0, step = 0.1),
+        numericInput("sd_b", label = "Test Standard Deviation", value = 24, step = 0.1, min = 0),
         numericInput("traffb_c", label = "Test Traffic", value = 10000, min = 0)
       )
     })
   }
-})
+}, ignoreInit = TRUE)
 
 uiOutput("results_inputs")
 ```
@@ -287,7 +308,7 @@ observeEvent(input$metric,{
       numericInput("convVolume", label = lab_vol, value = 1000, min = 1, max = 10000000)
     )
   })
-})
+}, ignoreInit = TRUE)
 
 uiOutput("rev_inputs")
 ```
@@ -383,6 +404,9 @@ Row {data-height=350}
 ```{r keyResults}
 rmarkdown::render_delayed({
   renderUI({
+    # Don't execute unless calculations have completed
+    req(!is.null(rctRslts$diff))
+        
     # Get colors from inputs
     colora <- paste0("color:",input$hexa)
     colorb <- paste0("color:",input$hexb)
@@ -391,8 +415,8 @@ rmarkdown::render_delayed({
     # Set a few labels based on metric selection
     if (input$metric == "Binomial (Conversion Rate)") {
       labs_results <- c(
-        paste0(round(rctRslts$cvra,1),"%"),
-        paste0(round(rctRslts$cvrb,1),"%")
+        paste0(round(rctRslts$cvra*100,1),"%"),
+        paste0(round(rctRslts$cvrb*100,1),"%")
       )
     } else {
       labs_results <- c(
@@ -444,6 +468,8 @@ rmarkdown::render_delayed({
 ```{r conf_interval_effect}
 rmarkdown::render_delayed({
   renderPlot({
+    # Don't execute unless calculations have completed
+    req(!is.null(rctRslts$diff))
     
     sims <- 10000 # how many simulations of conversion rate for chart
     ptDiff <- rctRslts$cvrb - rctRslts$cvra # raw effect
@@ -482,6 +508,9 @@ Row {data-height=350}
 
 ```{r table_stats}
 render_gt({
+  # Don't execute unless calculations have completed
+  req(!is.null(rctRslts$diff))
+  
   # Change some labels and formats based on metric type
   if (input$metric == "Binomial (Conversion Rate)") {
     metric_vars <- list(
@@ -564,7 +593,9 @@ render_gt({
 ```{r conf_intervals_means}
 rmarkdown::render_delayed({
   renderPlot({
-  
+    # Don't execute unless calculations have completed
+    req(!is.null(rctRslts$diff))
+    
     sims <- 10000 # how many simulations of conversion rate for chart
     
     # Different labels and formats based on metric type selected
@@ -665,6 +696,8 @@ Row {data-height=350}
 ```{r revprojections}
 rmarkdown::render_delayed({
   renderPlot({
+    # Don't execute unless calculations have completed
+    req(!is.null(rctRslts$diff))
     
     sims <- 10000 # how many simulations of the difference to make
     ptDiff <- rctRslts$cvrb - rctRslts$cvra # raw effect size to simulate a random distribution from
@@ -710,7 +743,7 @@ Predicting revenue impact is tricky and we recommend extreme caution before book
 
 Row {data-height=50}
 -----------------------------------------------------------------------
-version 2.1  
+version 2.2  
 To see version history, report bugs and submit feature requests [click here](https://github.com/alphanumerritt/abtestanalysis/issues){target="_blank"}.
 
 
