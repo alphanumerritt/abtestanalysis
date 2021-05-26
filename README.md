@@ -13,6 +13,9 @@ Note: there is an opacity applied to the custom colors.
 See the live version here: https://sdidev.shinyapps.io/ABTestAnalysis/
 
 ## Version History
+#### 2.2 - 5/25/21
+- Added some delays to the rendering of outputs on the results-related inputs so that if you change the inputs rapidly, the outputs don't render repeatedly
+- Fixed errors on initial render caused by some results variables not calculating early enough
 #### 2.1 - 5/24/21
 - Added support for continuous metrics
 - Added body width constraints to improve chart presentation on large screens
