@@ -13,6 +13,12 @@ Note: there is an opacity applied to the custom colors.
 See the live version here: https://sdidev.shinyapps.io/ABTestAnalysis/
 
 ## Version History
+#### 2.3 - 11/23/21
+- Added decimal places to conversion rates
+- Added sample ratio mismatch check
+- Added customizable notes panel
+- Removed revenue disclaimer from pdf report
+- Relabeled several inputs for great clarity/flexibility
 #### 2.2 - 5/25/21
 - Added some delays to the rendering of outputs on the results-related inputs so that if you change the inputs rapidly, the outputs don't render repeatedly
 - Fixed errors on initial render caused by some results variables not calculating early enough

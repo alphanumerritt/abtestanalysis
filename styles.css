@@ -154,6 +154,14 @@ p, a, body {
 	margin-top:13px;
 }
 
+/* SRM Notice */
+#section-srm_notice {
+  position: absolute;
+  width: 100%;
+  text-align: center;
+  color: red;
+}
+
 
 /* LOTS of stuff here just to get the navigation bar in order */
 

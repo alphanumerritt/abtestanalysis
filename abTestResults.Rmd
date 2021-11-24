@@ -70,11 +70,20 @@ onBookmarked(function(url) {
 ```
 <!-- </div> -->
 
+```{r varSetup, include=FALSE}
 
-```{r calculations_binomial, include=FALSE}
+# Declare reactive variables to hold all results for use throughout
+rctRslts <- reactiveValues(pv = NULL, cl = NULL, upa = NULL, upb = NULL, upd = NULL, loa = NULL, lob = NULL, lod = NULL, diff = NULL, seDif = NULL, z = NULL, srm = NULL)
+
 # Set a delay render around some inputs so that everything doesn't update repeatedly
-ins_react_b <- debounce(reactive({
+ins_react <- debounce(reactive({
   c(
+    input$mean_a,
+    input$mean_b, 
+    input$sd_a,
+    input$sd_b,
+    input$traffa_c,
+    input$traffb_c,
     input$cva,
     input$cvb, 
     input$traffa,
@@ -82,11 +91,13 @@ ins_react_b <- debounce(reactive({
   )
   }),750)
 
-# Declare reactive variables to hold all results for use throughout
-rctRslts <- reactiveValues(pv = NULL, cl = NULL, upa = NULL, upb = NULL, upd = NULL, loa = NULL, lob = NULL, lod = NULL, diff = NULL, seDif = NULL, z = NULL)
+```
+
+
+```{r calculations_binomial, include=FALSE}
 
 # Main event observer to listen for input changes and to calculate main results
-observeEvent(c(input$metric, ins_react_b(), input$confinterval, input$tails, input$nonf, input$bonf), {
+observeEvent(c(input$metric, ins_react(), input$confinterval, input$tails, input$nonf, input$bonf), {
   
   # Don't execute unless traffic inputs are greater than conversion inputs
   req(input$metric == "Binomial (Conversion Rate)")
@@ -118,6 +129,7 @@ observeEvent(c(input$metric, ins_react_b(), input$confinterval, input$tails, inp
   pval <- p.adjust(pval, method = "bonferroni", n = input$bonf)
   conf <- 1-pval
   testpower <- power.prop.test(n = (input$traffa + input$traffb)/2, p1 = cvra, p2 = cvrb, sig.level = 1 - ci, alternative = ifelse(input$tails < 2, "one", "two"))
+  
 
   # Dump all the values into the reactive variables
   rctRslts$pv <- pval
@@ -141,20 +153,9 @@ observeEvent(c(input$metric, ins_react_b(), input$confinterval, input$tails, inp
 ```
 
 ```{r calculations_continuous, include=FALSE}
-# Set a delay render around some inputs so that everything doesn't update repeatedly
-ins_react_c <- debounce(reactive({
-  c(
-    input$mean_a,
-    input$mean_b, 
-    input$sd_a,
-    input$sd_b,
-    input$traffa_c,
-    input$traffb_c
-  )
-  }),750)
 
 # Main event observer to listen for input changes and to calculate main results
-observeEvent(c(input$metric, ins_react_c(), input$confinterval, input$tails, input$nonf, input$bonf), {
+observeEvent(c(input$metric, ins_react(), input$confinterval, input$tails, input$nonf, input$bonf), {
   
   # Don't execute unless traffic inputs are greater than conversion inputs
   req(input$metric != "Binomial (Conversion Rate)")
@@ -212,6 +213,24 @@ observeEvent(c(input$metric, ins_react_c(), input$confinterval, input$tails, inp
   rctRslts$pwr <- testpower$power
 }, ignoreInit = TRUE)
   
+```
+
+
+```{r srm, include=FALSE}
+observeEvent(c(input$traffa,input$traffb,input$srm), {
+  req(input$traffa > 0)
+  req(input$traffb > 0)
+
+  a_pct <- input$traffa / (input$traffa + input$traffb) * 100
+  b_pct <- input$traffb / (input$traffa + input$traffb) * 100
+  
+  # Chi Squared Goodness of Fit test
+  srm_p <- round(chisq.test(c(input$traffa,input$traffb),p=c(.5,.5))$p.value,4) 
+  srm_t <- srm_p < 0.01
+  srm_r <- paste0(round(a_pct,1),"%/",round(b_pct,1),"%")
+  
+  rctRslts$srm <- c("test" = srm_t, "pval" = srm_p, "ratio" = srm_r)
+}, ignoreInit = TRUE)
 ```
 
 
@@ -287,7 +306,8 @@ inputPanel(
   numericInput("confinterval", label = "Statistical significance threshold (a %, also used for confidence intervals)", value = 95, min = 50, max = 99),
   numericInput("tails", label = "How many tails?", value = 1, min = 1, max = 2),
   #numericInput("nonf", label = "Non-inferiority margin (if applicable)", value = 0, min = 0, max = 100),
-  numericInput("bonf", label = "Total p-values being calculated (applies Bonferroni correction)", value = 1, min = 1, max = 99)
+  numericInput("bonf", label = "Total p-values being calculated (applies Bonferroni correction)", value = 1, min = 1, max = 99),
+  checkboxInput("srm", label = "Check for sample ratio mismatch on 50/50 split (99% significance)", value = TRUE)
 )
 
 ```
@@ -316,15 +336,18 @@ uiOutput("rev_inputs")
 ```{r custom_inputs}
 
 inputPanel(
-  h4("Customize Test Details"),
-  textInput("testname", label = "Name of test for report label", value = "A/B Test Results"),
+  h4("Customize This Report"),
+  textInput("testname", label = "Report title", value = "A/B Test Results"),
   textInput("expA", label = "Label for Control Variation", value = "A"),
   textInput("expB", label = "Label for Test Variation", value = "B"),
   
-  textInput("hypo", label = "Test hypothesis", value = "Test Hypothesis: If [this] then [that will happen] because [we have evidence]."),
+  textInput("hypo", label = "Short description", value = "Test Hypothesis: If [this] then [that will happen] because [we have evidence]."),
+  
   fileInput("imgA", "Screenshot Control", accept = c('image/png', 'image/jpeg')),
-  fileInput("imgB", "Screenshot Test", accept = c('image/png', 'image/jpeg'))
-  )
+  fileInput("imgB", "Screenshot Test", accept = c('image/png', 'image/jpeg')),
+  
+  textInput("note", label = "Notes panel", value = "The default configuration for this calculator is a 1-tail (one-sided) test with a 95% significance threshold as well as 95% confidence intervals controlled by the same setting. The defaults also assume a single dependent variable (key metric) and only 2 variants (control and test). Additional dependent variables and/or variants require p-value adjustments for multiple testing, which is achieved using the Bonferroni method.")
+)
 
 inputPanel(
   h4("Customize Colors"),
@@ -395,11 +418,25 @@ observeEvent(input$imgB, {
 uiOutput("testheader", class = "testmeta")
 ```
 
-
 Row {data-height=350}
 -----------------------------------------------------------------------
 
 ### Key Results
+<div id = "srm_notice">
+```{r srm readout}
+renderUI({
+  if (rctRslts$srm[["test"]] == TRUE && input$srm == TRUE) {
+    msg1 <- "Sample ratio mismatch detected! Sample ratio "
+    msg2 <- rctRslts$srm[["ratio"]]
+    msg3 <- " is stat. sig. at 99%." 
+    
+    div(id = "srm_text",
+        paste0(msg1,msg2,msg3)
+        )
+  }
+})
+```
+</div>
 
 ```{r keyResults}
 rmarkdown::render_delayed({
@@ -415,8 +452,8 @@ rmarkdown::render_delayed({
     # Set a few labels based on metric selection
     if (input$metric == "Binomial (Conversion Rate)") {
       labs_results <- c(
-        paste0(round(rctRslts$cvra*100,1),"%"),
-        paste0(round(rctRslts$cvrb*100,1),"%")
+        paste0(round(rctRslts$cvra*100,2),"%"),
+        paste0(round(rctRslts$cvrb*100,2),"%")
       )
     } else {
       labs_results <- c(
@@ -451,7 +488,7 @@ rmarkdown::render_delayed({
           "difference"
       ),
       div(id = "resultsRow5", # row with stat sig
-        paste0(round(rctRslts$cl*100,1),"% statistical significance")
+        paste0(round(rctRslts$cl*100,3),"% statistical significance")
       ),
       div(id = "resultsRow6", # row with result determination
         if (rctRslts$cl*100 > input$confinterval) "This result is statistically significant. The test is conclusive." 
@@ -544,6 +581,8 @@ render_gt({
       "P-value",
       "Statistical Significance",
       "Power"
+      #"Sample Ratio",
+      #"Sample Ratio Mismatch"
       ),
     Lower = c(
       rctRslts$loa,
@@ -576,17 +615,18 @@ render_gt({
   
   # Put the data frame in a nice table format
   gt(df) %>%
-    fmt_percent(columns=vars(Lower,Observed,Upper), rows=metric_vars$pct_r, decimals = 1) %>%
-    fmt_number(columns=vars(Lower,Observed,Upper), rows=metric_vars$num2_r, decimals = 2) %>%
-    fmt_number(columns=vars(Lower,Observed,Upper), rows=metric_vars$num4_r, decimals = 4) %>%
-    cols_align(align = "left", columns = vars(Metric)) %>%
-    cols_align(align = "center", columns = vars(Lower, Observed, Upper)) %>%
+    fmt_percent(columns=c(Lower,Observed,Upper), rows=metric_vars$pct_r, decimals = 2) %>%
+    fmt_number(columns=c(Lower,Observed,Upper), rows=metric_vars$num2_r, decimals = 2) %>%
+    fmt_number(columns=c(Lower,Observed,Upper), rows=metric_vars$num4_r, decimals = 4) %>%
+    cols_align(align = "left", columns = c(Metric)) %>%
+    cols_align(align = "center", columns = c(Lower, Observed, Upper)) %>%
     cols_label(Metric = "Measure") %>%
-    fmt_missing(columns=vars(Lower,Observed,Upper), rows = NULL, missing_text = " ") %>% # any NA values leave blanks
+    fmt_missing(columns=c(Lower,Observed,Upper), rows = NULL, missing_text = " ") %>% # any NA values leave blanks
     tab_options(table.width = pct(100))
 
 }, align = "center")
 ```
+
 
 ### Confidence Intervals of Variants
 
@@ -603,12 +643,12 @@ rmarkdown::render_delayed({
       metric_vars <- list(
         lab_x = "True Conversion Rate",
         lab_annos = c(
-           paste0(round(rctRslts$loa*100,1),"%"),
-           paste0(round(rctRslts$lob*100,1),"%"),
-           paste0(round(rctRslts$cvra*100,1),"%"),
-           paste0(round(rctRslts$cvrb*100,1),"%"),
-           paste0(round(rctRslts$upa*100,1),"%"),
-           paste0(round(rctRslts$upb*100,1),"%")
+           paste0(round(rctRslts$loa*100,2),"%"),
+           paste0(round(rctRslts$lob*100,2),"%"),
+           paste0(round(rctRslts$cvra*100,2),"%"),
+           paste0(round(rctRslts$cvrb*100,2),"%"),
+           paste0(round(rctRslts$upa*100,2),"%"),
+           paste0(round(rctRslts$upb*100,2),"%")
          ),
         plot_scale_x = scale_x_continuous(labels = scales::percent)
         )
@@ -734,16 +774,27 @@ rmarkdown::render_delayed({
 ```
 
 ### Notes
+```{r custom_notes}
+renderUI({
+  input$note
+})
+```
 
-The revenue projections are based on the confidence interval around the difference in conversion rates. These probabilities are applied, without any decay rate, to 6 months of conversion volume at the value provided. The chart shows the cumulative probability of achieving at least a certain value, even if negative.
-
-Predicting revenue impact is tricky and we recommend extreme caution before booking any upside with the finance team. In fact, [we made a whole simulator](https://sdidev.shinyapps.io/test-result-simulator/){target="_blank"} to illustrate why. 
+ 
 
 </div> <!-- End of print area -->
 
+Row {data-height=150}
+-----------------------------------------------------------------------
+### Disclaimer on Revenue Projections
+
+The revenue projections are based on the confidence interval around the difference in conversion rates. These probabilities are applied, without any decay rate, to 6 months of conversion volume at the value provided. The chart shows the cumulative probability of achieving at least a certain value, even if negative.
+
+Predicting revenue impact is tricky and we recommend extreme caution before attributing any upside to the implemented test. Lifts from winners tend to be grossly overestimated and the more surprising a result, the more suspect it should be. In fact, [we made a whole simulator](https://sdidev.shinyapps.io/test-result-simulator/){target="_blank"} to illustrate why.
+
 Row {data-height=50}
 -----------------------------------------------------------------------
-version 2.2  
+version 2.3  
 To see version history, report bugs and submit feature requests [click here](https://github.com/alphanumerritt/abtestanalysis/issues){target="_blank"}.
 
 
