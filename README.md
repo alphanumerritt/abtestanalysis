@@ -19,6 +19,8 @@ See the live version here: https://sdidev.shinyapps.io/ABTestAnalysis/
 - Added customizable notes panel
 - Removed revenue disclaimer from pdf report
 - Relabeled several inputs for great clarity/flexibility
+- Added configuration values to pdf printout
+- Other minor formatting issues
 #### 2.2 - 5/25/21
 - Added some delays to the rendering of outputs on the results-related inputs so that if you change the inputs rapidly, the outputs don't render repeatedly
 - Fixed errors on initial render caused by some results variables not calculating early enough

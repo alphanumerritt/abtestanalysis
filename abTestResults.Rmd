@@ -254,17 +254,6 @@ inputPanel(
 
 
 ```{r test_inputs}
-# inputPanel(
-#   h4("Control Variation"),
-#   numericInput("cva", label = "Control Conversions", value = 890, min = 0),
-#   numericInput("traffa", label = "Control Traffic", value = 10000, min = 0)
-# )
-# 
-# inputPanel(
-#   h4("Test Variation"),
-#   numericInput("cvb", label = "Test Conversions", value = 920, min = 0),
-#   numericInput("traffb", label = "Test Traffic", value = 10000, min = 0)
-# )
 
 observeEvent(input$metric,{
   if (input$metric == "Binomial (Conversion Rate)") {
@@ -462,6 +451,8 @@ rmarkdown::render_delayed({
       )
     }
     
+    sig_decimals <- if (rctRslts$cl*100 > 99) 3 else 1 # decimal places for statistical significance
+    
     # Create UI elements in rows of divs
     div(id = "resultsContainer", # outer shell
       div(id = "resultsRow1", # row with variant names
@@ -488,7 +479,7 @@ rmarkdown::render_delayed({
           "difference"
       ),
       div(id = "resultsRow5", # row with stat sig
-        paste0(round(rctRslts$cl*100,3),"% statistical significance")
+        paste0(round(rctRslts$cl*100,sig_decimals),"% statistical significance")
       ),
       div(id = "resultsRow6", # row with result determination
         if (rctRslts$cl*100 > input$confinterval) "This result is statistically significant. The test is conclusive." 
@@ -780,21 +771,48 @@ renderUI({
 })
 ```
 
- 
-
+Row {data-height=30}
+-----------------------------------------------------------------------
+```{r config_summary}
+renderUI({
+  msg1 <- "Inputs Used - "
+  msg2 <- paste0("Control conversions: ",input$cva)
+  msg3 <- paste0(", Control traffic: ",input$traffa)
+  msg4 <- paste0(", Test conversions: ",input$cvb)
+  msg5 <- paste0(", Test traffic: ",input$traffb)
+  msg6 <- paste0(", Significance threshold: ",input$confinterval)
+  msg7 <- paste0(", Tails: ",input$tails)
+  msg8 <- paste0(", Bonferroni correction: ",input$bonf)
+  msg9 <- paste0(", Conversion value: ",input$convValue)
+  msg10 <- paste0(", Conversions per month: ",input$convVolume)
+  msg11 <- paste0("Control mean: ",input$mean_a)
+  msg12 <- paste0(", Control standard deviation: ",input$sd_a)
+  msg13 <- paste0(", Control traffic: ",input$traffa_c)
+  msg14 <- paste0(", Test mean: ",input$mean_b)
+  msg15 <- paste0(", Test standard deviation: ",input$sd_b)
+  msg16 <- paste0(", Test traffic: ",input$traffb_c)
+  
+  message <- if (input$metric == "Binomial (Conversion Rate)") paste0(msg2,msg3,msg4,msg5,msg6,msg7,msg8,msg9,msg10) else paste0(msg11,msg12,msg13,msg14,msg15,msg16,msg6,msg7,msg8,msg9,msg10)
+  
+  div(
+    tags$b(msg1),
+    message
+  )
+})
+```
 </div> <!-- End of print area -->
 
-Row {data-height=150}
+Row {data-height=120}
 -----------------------------------------------------------------------
-### Disclaimer on Revenue Projections
+### What You Should Know About Revenue Projections
 
 The revenue projections are based on the confidence interval around the difference in conversion rates. These probabilities are applied, without any decay rate, to 6 months of conversion volume at the value provided. The chart shows the cumulative probability of achieving at least a certain value, even if negative.
 
 Predicting revenue impact is tricky and we recommend extreme caution before attributing any upside to the implemented test. Lifts from winners tend to be grossly overestimated and the more surprising a result, the more suspect it should be. In fact, [we made a whole simulator](https://sdidev.shinyapps.io/test-result-simulator/){target="_blank"} to illustrate why.
 
-Row {data-height=50}
+Row {data-height=30}
 -----------------------------------------------------------------------
-version 2.3  
+<b>version 2.3 - </b> 
 To see version history, report bugs and submit feature requests [click here](https://github.com/alphanumerritt/abtestanalysis/issues){target="_blank"}.
 
 

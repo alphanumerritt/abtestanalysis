@@ -162,6 +162,11 @@ p, a, body {
   color: red;
 }
 
+/* Styles for disclaimer */
+#section-what-you-should-know-about-revenue-projections {
+  overflow: scroll;
+}
+
 
 /* LOTS of stuff here just to get the navigation bar in order */
 
