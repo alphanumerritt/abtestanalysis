@@ -9,11 +9,13 @@ output:
     favicon: favicon.png
     fig_height: 1
     navbar: 
-      - { title: "Sequential App", href: "https://sdidev.shinyapps.io/sequential-test-calculator/" }
-      - { title: "Sample Size", href: "https://sdidev.shinyapps.io/sample-size-calculator/" }
-      - { title: "Runtime", href: "https://sdidev.shinyapps.io/sample-size-calculator-runtime/" }
-      - { title: "Impact Simulation", href: "https://sdidev.shinyapps.io/test-result-simulator/" }
-      - { title: "Experimentation ROI", "href:https://sdidev.shinyapps.io/experimentation-roi/" }
+      - { title: "Planning: MDE-Based Calculator", href: "https://sdidev.shinyapps.io/sample-size-calculator/" }
+      - { title: "Planning: Runtime-Based Calculator", href: "https://sdidev.shinyapps.io/sample-size-calculator-runtime/" }
+      - { title: "Planning/Analysis: Sequential Testing", href: "https://sdidev.shinyapps.io/sequential-test-calculator/" }
+      - { title: "Analysis: Test Results Assessment", href: "https://sdidev.shinyapps.io/ABTestAnalysis/" }
+      - { title: "Analysis: Bayesian Testing", href: "https://sdidev.shinyapps.io/bayesian-ab-app/" }
+      - { title: "Simulator: A/B Test Result", href: "https://sdidev.shinyapps.io/test-result-simulator/" }
+      - { title: "Simulator: Experimentation ROI", href: "https://sdidev.shinyapps.io/experimentation-roi/" }
 runtime: shiny
 ---
 
@@ -812,7 +814,7 @@ Predicting revenue impact is tricky and we recommend extreme caution before attr
 
 Row {data-height=30}
 -----------------------------------------------------------------------
-<b>version 2.3 - </b> 
+<b>version 2.31 - </b> 
 To see version history, report bugs and submit feature requests [click here](https://github.com/alphanumerritt/abtestanalysis/issues){target="_blank"}.
 
 

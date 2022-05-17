@@ -148,12 +148,6 @@ p, a, body {
 	margin: 15px;
 }
 
-/* Set SDI logo size */
-.navbar-logo img {
-	max-width: 150px;
-	margin-top:13px;
-}
-
 /* SRM Notice */
 #section-srm_notice {
   position: absolute;
@@ -169,6 +163,12 @@ p, a, body {
 
 
 /* LOTS of stuff here just to get the navigation bar in order */
+
+/* Set SDI logo size */
+.navbar-logo img {
+	max-width: 150px;
+	margin-top:13px;
+}
 
 /* Navbar lineheight */
 .navbar-nav>li>a {

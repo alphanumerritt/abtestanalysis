@@ -13,6 +13,8 @@ Note: there is an opacity applied to the custom colors.
 See the live version here: https://sdidev.shinyapps.io/ABTestAnalysis/
 
 ## Version History
+#### 2.31 - 5/17/22
+- Updated nav links
 #### 2.3 - 11/23/21
 - Added decimal places to conversion rates
 - Added sample ratio mismatch check
